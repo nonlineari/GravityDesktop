@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NLS Visualist • Gravity Serve</title>
+  <style>
+    :root {
+      --bg: #09090f;
+      --panel: #161a2a;
+      --panel-deep: #0b1020;
+      --accent: #9be7ff;
+      --text: #e6f6ff;
+      --muted: #98b7c7;
+      --ok: #5ae0d0;
+      --warn: #c8d05a;
+      --err: #e85a6a;
+      --purple: #b05ad0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 16px 20px 32px; }
+    .bordered {
+      border: 1px solid rgba(155, 231, 255, 0.35);
+      border-radius: 12px;
+      background: var(--panel);
+      padding: 12px 14px;
+    }
+    h1 { margin: 0 0 4px; font-size: 1.45rem; color: var(--text); }
+    .sub { color: var(--muted); font-size: 0.85rem; }
+    .banner { letter-spacing: 2px; text-transform: uppercase; font-size: 0.75rem; opacity: 0.75; }
+    .stages {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .stage {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 8px;
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.12);
+    }
+    .stage .sym { font-size: 1.25rem; }
+    .stage .lbl { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      border: 1px solid rgba(155,231,255,0.25);
+    }
+    .status-pill.live { color: var(--ok); border-color: var(--ok); }
+    .status-pill.off { color: var(--err); border-color: var(--err); }
+    .status-pill.warn { color: var(--warn); border-color: var(--warn); }
+    .job-status { font-weight: 600; }
+    .job-status.pending { color: var(--warn); }
+    .job-status.downloading, .job-status.converting { color: var(--ok); }
+    .job-status.completed { color: var(--accent); }
+    .job-status.failed, .job-status.cancelled { color: var(--err); }
+    .job-err { color: var(--err); font-size: 0.72rem; max-width: 280px; display: block; }
+    .job-hint { color: var(--muted); font-size: 0.78rem; margin: 6px 0 0; }
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid rgba(155,231,255,0.2); margin: 14px 0 10px; }
+    .tab {
+      padding: 8px 14px;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      user-select: none;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    input[type="text"], select {
+      flex: 1;
+      min-width: 200px;
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.25);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button, .btn {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: var(--panel-deep);
+      color: var(--text);
+      border: 1px solid rgba(155,231,255,0.3);
+      font-weight: 400;
+    }
+    #gif-btn { background: #e05ac0; color: #09090f; }
+    #vac-log {
+      display: none;
+      margin-top: 8px;
+      min-height: 120px;
+      max-height: 320px;
+      overflow: auto;
+      background: #070b14;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      color: var(--ok);
+    }
+    #vac-log.show, #dl-status.busy #vac-log { display: block; }
+    label.opt { color: var(--muted); font-size: 0.78rem; display: inline-flex; align-items: center; gap: 4px; }
+    button:hover { filter: brightness(1.08); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(155,231,255,0.1); }
+    th { color: var(--accent); font-weight: 600; }
+    .progress {
+      height: 6px;
+      background: var(--panel-deep);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress > div { height: 100%; background: var(--ok); transition: width 0.3s; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .card {
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.15);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .card .body { padding: 10px 12px; }
+    .thumb {
+      height: 110px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.7rem;
+      overflow: hidden;
+      position: relative;
+      border-bottom: 1px solid rgba(155,231,255,0.15);
+    }
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .asc-filmic {
+      filter: contrast(1.15) saturate(0.85) sepia(0.15) hue-rotate(-8deg);
+    }
+    .asc-gravity {
+      filter: contrast(1.2) saturate(0.7) hue-rotate(260deg);
+      box-shadow: inset 0 0 24px rgba(176,90,208,0.25);
+    }
+    .asc-label {
+      position: absolute;
+      bottom: 4px;
+      left: 6px;
+      font-size: 0.62rem;
+      letter-spacing: 1px;
+      background: rgba(9,9,15,0.72);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: var(--accent);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 0.62rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(176,90,208,0.25);
+      color: #d8a8f0;
+      margin-left: 4px;
+    }
+    .mint-line { color: var(--ok); font-size: 0.78rem; }
+    .meta { color: var(--muted); font-size: 0.75rem; margin-top: 4px; line-height: 1.4; }
+    .card-title { font-weight: 700; line-height: 1.3; }
+    .badge.wyhiwy { background: rgba(232,90,106,0.22); color: #e85a6a; }
+    .badge.net { background: rgba(90,224,208,0.18); color: #5ae0d0; }
+    .badge.filmic { background: rgba(90,224,208,0.2); color: #5ae0d0; }
+    .badge.rec { background: rgba(155,231,255,0.16); color: var(--accent); }
+    .badge.norm { background: rgba(232,196,90,0.18); color: #e8c45a; }
+    .arch-img { width: 100%; height: auto; display: block; margin: 10px 0 16px; border: 1px solid rgba(155,231,255,0.25); border-radius: 8px; background: #0b1020; }
+    #norm-select { font: inherit; background: var(--panel-deep); color: var(--text); border: 1px solid rgba(155,231,255,0.3); border-radius: 6px; padding: 4px 6px; }
+    #player-modal audio { width: min(720px, 90vw); }
+    .asc-block {
+      white-space: pre-wrap;
+      font-size: 0.75rem;
+      color: var(--muted);
+      max-height: 320px;
+      overflow: auto;
+      background: var(--panel-deep);
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(155,231,255,0.12);
+    }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+    .stat { background: var(--panel-deep); padding: 10px; border-radius: 8px; border: 1px solid rgba(155,231,255,0.1); }
+    .stat .n { font-size: 1.4rem; font-weight: 700; }
+    .stat .l { font-size: 0.68rem; color: var(--muted); }
+    #dl-status {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.15);
+      font-size: 0.8rem;
+      display: none;
+    }
+    #dl-status.active { display: block; }
+    #dl-status.err { border-color: var(--err); color: var(--err); }
+    #dl-status.ok { border-color: var(--ok); color: var(--ok); }
+    #dl-status .bar {
+      height: 6px;
+      background: #111;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    #dl-status .bar > div {
+      height: 100%;
+      background: var(--ok);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    #toast {
+      position: fixed; bottom: 16px; right: 16px;
+      background: var(--panel);
+      border: 1px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: none;
+      z-index: 99;
+    }
+    #player-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.82);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #player-modal.open { display: flex; }
+    #player-modal video, #player-modal img { max-width: 90vw; max-height: 70vh; border: 1px solid var(--accent); border-radius: 8px; background: #000; }
+    #player-title { color: var(--accent); font-size: 0.8rem; margin-bottom: 8px; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .glitch { position: relative; display: inline-block; }
+    @media (max-width: 720px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .stages { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="row" style="justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1 class="glitch">NLS Visualist • Gravity Serve</h1>
+        <p class="banner">1000 years old nonlinear h@k reality</p>
+        <p class="sub">Browser client for gravity-server • jobs + catalog + interlaterus mint • no kill • no eval</p>
+      </div>
+      <div class="row">
+        <a href="/docs/diagrams.html" class="sub" style="color:var(--accent);text-decoration:none;margin-right:12px;">Diagrams</a>
+        <a href="/plan" class="sub" style="color:var(--accent);text-decoration:none;margin-right:12px;">📋 Approved Plan</a>
+        <span id="version-pill" class="sub" style="margin-right:10px">v—</span>
+        <span id="conn-pill" class="status-pill off">gravity offline</span>
+        <span id="worker-pill" class="status-pill off" title="Pipeline worker status">worker off</span>
+        <span class="sub" id="clock" title="UTC axiom → derived city clocks"></span>
+      </div>
+    </div>
+
+    <div class="stages">
+      <div class="stage"><div class="sym" style="color:#5ae0d0">◐</div><div class="lbl">INPUT</div></div>
+      <div class="stage"><div class="sym" style="color:#c8d05a">▦</div><div class="lbl">DOWNLOAD</div></div>
+      <div class="stage"><div class="sym" style="color:#e85a6a">⌬</div><div class="lbl">H.264</div></div>
+      <div class="stage"><div class="sym" style="color:#e05ac0">▦</div><div class="lbl">GIF</div></div>
+      <div class="stage"><div class="sym" style="color:#5ad07a">▣</div><div class="lbl">GRAVITY</div></div>
+      <div class="stage"><div class="sym" style="color:#b05ad0">◈</div><div class="lbl">CATALOG</div></div>
+    </div>
+
+    <div class="bordered" style="margin-bottom:12px;">
+      <div class="row">
+        <input type="text" id="url-input" placeholder="https://… paste URL">
+        <select id="mode-select" title="Pipeline = worker queue · Direct = app-style ~/Downloads/">
+          <option value="direct">Direct (app H.264 / GIF)</option>
+          <option value="pipeline">Pipeline Job (worker)</option>
+        </select>
+        <select id="res-select" title="Pixel size. 2160p = 4K. Falls back down if missing — never upscales 360p.">
+          <option value="360">360p</option>
+          <option value="1080">1080p</option>
+          <option value="2160" selected>2160p</option>
+        </select>
+        <select id="preset-select">
+          <option value="balanced-4k">balanced-4k</option>
+          <option value="hq-4k">hq-4k</option>
+          <option value="fast-1080">fast-1080</option>
+          <option value="interstellar-nonlinear">interstellar-nonlinear</option>
+        </select>
+        <label class="sub" id="gravity-wrap"><input type="checkbox" id="gravity-check"> gravity</label>
+        <label class="sub" title="Peak: constant gain to −1 dBFS. Loudness: EBU R128 linear gain to −23 LUFS, true peak −1.5 dBTP. Direct downloads rewrite audio before the tesseract mint. Norm on a card rewrites that file in ~/Downloads.">norm
+          <select id="norm-select">
+            <option value="off" selected>off</option>
+            <option value="peak">peak</option>
+            <option value="loudness">loudness</option>
+          </select>
+        </label>
+        <button id="add-btn">H.264 Direct</button>
+        <button id="gif-btn" title="Download animated GIF — X/Twitter, Giphy, Tenor, Imgur gifv, .gif, or recode video">GIF Direct</button>
+        <button class="secondary" id="open-dl-btn">Downloads ↗</button>
+      </div>
+      <div class="row" style="margin-top:8px;gap:12px;flex-wrap:wrap;">
+        <label class="opt" title="Opt-in: strip JS/HTML/PHP polyglots and metadata after img/vid/gif"><input type="checkbox" id="vacuum-check"> vacuum</label>
+        <label class="opt" title="Show live vacuum / TLS-JA3 steps"><input type="checkbox" id="vac-detail-check"> detail</label>
+        <button type="button" class="secondary" id="vac-log-btn" style="font-size:0.72rem;padding:2px 10px" title="Refresh vacuum / TLS-JA3 log (no cache)">log ↻</button>
+        <button type="button" class="secondary" id="vac-clear-btn" style="font-size:0.72rem;padding:2px 10px" title="Clear live log + vacuum-log.jsonl">clear</button>
+        <label class="opt" title="Opt-out: Chrome TLS/JA3 impersonate (curl_cffi). Uncheck to skip --impersonate"><input type="checkbox" id="tls-ja3-check" checked> TLS/JA3</label>
+      </div>
+      <p class="sub" id="mode-hint" style="margin:8px 0 0;">Direct mode matches GravityDesktop → 360/1080/2160p, VP9→H.264 at the same pixels, ~/Downloads/direct-h264-*.mp4</p>
+      <div id="dl-status">
+        <div id="dl-status-text">Idle</div>
+        <div class="bar"><div id="dl-status-bar"></div></div>
+        <pre id="vac-log"></pre>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="jobs">Gravity Jobs</div>
+      <div class="tab" data-tab="visualist">Visualist Catalog</div>
+      <div class="tab" data-tab="interlaterus">Interlaterus Mint</div>
+      <div class="tab" data-tab="downloads">Recent Downloads</div>
+      <div class="tab" data-tab="recs">WYHIWYREC</div>
+      <div class="tab" data-tab="pos">POS / Spatio</div>
+      <div class="tab" data-tab="chain">Chain</div>
+      <div class="tab" data-tab="scheduled">Scheduled</div>
+      <div class="tab" data-tab="asc">ASC Live</div>
+    </div>
+
+    <div id="panel-jobs" class="panel active bordered">
+      <div class="stats" id="job-stats"></div>
+      <p class="job-hint" id="job-worker-hint"></p>
+      <div class="row" style="margin:8px 0;gap:8px;">
+        <button class="secondary" id="worker-start-btn" style="font-size:0.75rem;padding:4px 10px" title="Start embedded pipeline worker">Start worker</button>
+        <button class="secondary" id="worker-recover-btn" style="font-size:0.75rem;padding:4px 10px" title="Requeue stuck downloading/converting jobs">Recover stale</button>
+        <button class="secondary" id="jobs-stop-refresh-btn" style="font-size:0.75rem;padding:4px 10px;color:var(--err);border-color:var(--err)" title="Cancel all live jobs and refresh the table (Esc)">⏹ Stop + Refresh</button>
+        <label class="sub" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="jobs-hide-cancelled" checked> Hide cancelled
+        </label>
+        <label class="sub" style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="jobs-hide-completed"> Hide completed
+        </label>
+      </div>
+      <table>
+        <thead><tr><th>#</th><th>Title</th><th>Stage</th><th>%</th><th>Preset</th><th>Live</th></tr></thead>
+        <tbody id="jobs-body"></tbody>
+      </table>
+    </div>
+
+    <div id="panel-visualist" class="panel bordered">
+      <div class="grid" id="catalog-grid"></div>
+    </div>
+
+    <div id="panel-interlaterus" class="panel bordered">
+      <table>
+        <thead><tr><th>Pattern</th><th>Vertex</th><th>Title</th><th>File</th><th>Minted</th></tr></thead>
+        <tbody id="mint-body"></tbody>
+      </table>
+    </div>
+
+    <div id="panel-downloads" class="panel bordered">
+      <div class="stats" id="dl-stats"></div>
+      <p class="sub">Direct H.264 / GIF takes in ~/Downloads — X, Giphy, Tenor, Imgur, YouTube. Titles from mint sidecar, X, or oEmbed.</p>
+      <div class="grid" id="downloads-grid"></div>
+    </div>
+
+    <div id="panel-recs" class="panel bordered">
+      <div class="stats" id="rec-stats"></div>
+      <p class="sub">ASC rec catalog — WYHIWYREC (what you hear), net stream, and catalog takes in ~/Downloads/asc-rec-*. Norm uses the box above: peak −1 dBFS, or loudness −23 LUFS.</p>
+      <div class="grid" id="recs-grid"><p class="sub">loading rec catalog…</p></div>
+    </div>
+
+    <div id="panel-chain" class="panel bordered">
+      <p class="sub">The tesseract is the address of a finished file. Picture and sound are processed first. ffprobe turns the file into a 4-number audio vector. The sha256 picks one of 16 vertices, and that vector is stored on the vertex. Norm is one programme gain applied to the audio before that mint on a direct download, or from a card onto a file already in ~/Downloads. <a href="/docs/diagrams.html" style="color:var(--accent)">All eight drawings</a>.</p>
+      <img class="arch-img" src="/docs/gravity/chain.png" alt="Gravity chain: signal, probe, tesseract, catalog">
+      <img class="arch-img" src="/docs/audio/overview.png" alt="Recorder, encode, norm, gravity split">
+      <img class="arch-img" src="/docs/gravity/tesseract.png" alt="Sixteen tesseract vertices">
+      <p class="sub"><a href="/docs/gravity/README.md" style="color:var(--accent)">docs/gravity</a> · <a href="/docs/audio/README.md" style="color:var(--accent)">docs/audio</a> · <a href="/docs/gravity/signal.md" style="color:var(--accent)">signal</a> · <a href="/docs/gravity/position.md" style="color:var(--accent)">position</a> · <a href="/docs/audio/normalization.md" style="color:var(--accent)">normalisation</a></p>
+    </div>
+
+    <div id="panel-pos" class="panel bordered">
+      <div class="stats" id="pos-stats"></div>
+      <p class="sub" id="pos-digest" style="word-break:break-all;"></p>
+      <div class="row" style="margin-bottom:8px;gap:8px;">
+        <button class="secondary" id="pos-rebuild-btn" style="font-size:0.75rem;padding:4px 10px">Rebuild index</button>
+        <button class="secondary" id="pos-orphans-btn" style="font-size:0.75rem;padding:4px 10px">Show orphans</button>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>AVD (filmic)</th><th>POS (vertex / zone)</th><th>Status</th></tr></thead>
+        <tbody id="pos-body"></tbody>
+      </table>
+    </div>
+
+    <div id="panel-scheduled" class="panel bordered">
+      <div class="stats" id="cron-stats"></div>
+      <p class="sub">Server-side cron for AVD/POS catalog positioning (mint_watch · pos_reconcile · avd_scan). Not browser timers.</p>
+      <table>
+        <thead><tr><th>#</th><th>Task</th><th>Schedule</th><th>Last run</th><th>Status</th><th>Next</th><th>Actions</th></tr></thead>
+        <tbody id="cron-body"></tbody>
+      </table>
+      <h3 style="margin:16px 0 8px;font-size:0.9rem;color:var(--accent);">Recent runs</h3>
+      <table>
+        <thead><tr><th>Run</th><th>Task</th><th>Status</th><th>Started</th><th>Finished</th></tr></thead>
+        <tbody id="cron-runs-body"></tbody>
+      </table>
+    </div>
+
+    <div id="panel-asc" class="panel bordered">
+      <pre class="asc-block" id="asc-live">Waiting for gravity_update…</pre>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <div id="player-modal">
+    <div style="text-align:center; max-width:92vw;">
+      <div id="player-title">ASC playback</div>
+      <video id="player" controls playsinline preload="metadata"></video>
+      <img id="player-gif" alt="GIF" style="display:none;">
+      <audio id="player-audio" controls preload="metadata" style="display:none;"></audio>
+      <div style="margin-top:8px;"><button class="secondary" id="close-player">Close</button></div>
+    </div>
+  </div>
+
+  <script>
+    let currentTab = 'jobs';
+    let lastGravity = null;
+    let dlStatusTimer = null;
+
+    function $(id) { return document.getElementById(id); }
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function toast(msg) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3200);
+    }
+
+    function renderDlStatus(data) {
+      const box = $('dl-status');
+      const text = $('dl-status-text');
+      const bar = $('dl-status-bar');
+      if (!data || data.status === 'idle') {
+        box.classList.remove('active', 'err', 'ok');
+        return;
+      }
+      box.classList.add('active');
+      box.classList.toggle('err', data.status === 'error');
+      box.classList.toggle('ok', data.status === 'done');
+      box.classList.toggle('busy', data.status === 'downloading');
+      const msg = data.message || data.error || data.status;
+      text.textContent = msg;
+      const pct = Math.max(0, Math.min(100, data.progress || 0));
+      bar.style.width = pct + '%';
+      const logEl = $('vac-log');
+      const detailOn = $('vac-detail-check') && $('vac-detail-check').checked;
+      if (logEl) {
+        if (detailOn || data.status === 'downloading' || (data.log || []).length) logEl.classList.add('show');
+        const lines = data.log || [];
+        if (lines.length) {
+          logEl.textContent = lines.join('\n');
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      }
+      if (data.status === 'error') toast(data.error || 'Download failed (403?)');
+      if (data.status === 'done') {
+        const msg = data.message || '';
+        toast(msg.indexOf('norm ') >= 0 ? msg : 'Direct download complete → ~/Downloads/');
+        fetchDownloads();
+      }
+    }
+
+    async function pollDlStatus() {
+      try {
+        const res = await fetch('/api/download/status');
+        const data = await res.json();
+        renderDlStatus(data);
+        if (data.status === 'downloading') {
+          if (!dlStatusTimer) dlStatusTimer = setInterval(pollDlStatus, 1000);
+        } else if (dlStatusTimer) {
+          clearInterval(dlStatusTimer);
+          dlStatusTimer = null;
+        }
+      } catch (e) { /* ignore */ }
+    }
+
+    document.querySelectorAll('.tab').forEach(el => {
+      el.addEventListener('click', () => showTab(el.dataset.tab));
+    });
+
+    function showTab(tab) {
+      if (!tab || !$('panel-' + tab)) tab = 'jobs';
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      $('panel-' + tab).classList.add('active');
+      if (location.hash.replace('#','') !== tab) {
+        try { history.replaceState(null, '', '#' + tab); } catch (e) { location.hash = tab; }
+      }
+      refreshActive();
+    }
+
+    function setConn(connected) {
+      const pill = $('conn-pill');
+      pill.textContent = connected ? 'gravity live' : 'gravity offline';
+      pill.className = 'status-pill ' + (connected ? 'live' : 'off');
+    }
+
+    function isCancelable(status) {
+      return ['pending','downloading','converting'].includes(status);
+    }
+
+    async function locateFile(path, name) {
+      try {
+        const body = {};
+        if (path) body.path = path;
+        if (name) body.name = name;
+        const res = await fetch('/api/locate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          toast('Located: ' + (data.path || data.name || name || path || ''));
+        } else {
+          toast(data.error || 'Locate failed');
+        }
+      } catch (e) {
+        toast('Locate failed: ' + e.message);
+      }
+    }
+
+    function locateBtn(path, name, label) {
+      const p = path || '';
+      const n = name || '';
+      if (!p && !n) return '';
+      const lab = label || 'Locate ↗';
+      return `<button type="button" class="secondary locate-file" data-path="${esc(p)}" data-name="${esc(n)}" title="${esc(p || n)}" style="font-size:0.7rem;padding:2px 8px">${lab}</button>`;
+    }
+
+    function bindLocateButtons(root) {
+      (root || document).querySelectorAll('.locate-file').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          locateFile(btn.dataset.path || '', btn.dataset.name || '');
+        });
+      });
+    }
+
+    function setWorkerPill(worker) {
+      const pill = $('worker-pill');
+      if (!pill) return;
+      if (!worker) {
+        pill.textContent = 'worker ?';
+        pill.className = 'status-pill off';
+        return;
+      }
+      if (worker.running) {
+        const mode = worker.mode || (worker.in_process ? 'embedded' : 'external');
+        const cur = worker.current_job_id ? ' · #' + worker.current_job_id : '';
+        pill.textContent = 'worker ' + mode + cur;
+        pill.className = 'status-pill live';
+      } else {
+        pill.textContent = 'worker off';
+        pill.className = 'status-pill off';
+      }
+      const hint = $('job-worker-hint');
+      if (hint) {
+        if (!worker.running) {
+          hint.textContent = worker.hint || 'Pipeline jobs need a worker — click Start worker or run: nls-video worker';
+        } else {
+          const parts = [
+            'Worker ' + (worker.mode || 'on'),
+            'pending ' + (worker.pending_count || 0),
+            'active ' + (worker.active_count || 0),
+            'failed ' + (worker.failed_count || 0),
+          ];
+          if (worker.current_job_id) parts.push('current #' + worker.current_job_id);
+          if (worker.last_error) parts.push('last err: ' + String(worker.last_error).slice(0, 80));
+          hint.textContent = parts.join(' · ');
+        }
+      }
+    }
+
+    function jobDisplayTitle(j) {
+      const t = (j.title || '').trim();
+      if (t && t !== 'Untitled') return t;
+      const u = (j.url || j.source_file || '').trim();
+      if (!u) return 'Untitled';
+      // show basename for local paths
+      const base = u.split('/').pop() || u;
+      return base.slice(0, 48);
+    }
+
+    function renderJobs(jobs, worker) {
+      const pending = jobs.filter(j => j.status === 'pending').length;
+      const active = jobs.filter(j => ['downloading','converting'].includes(j.status)).length;
+      const done = jobs.filter(j => j.status === 'completed').length;
+      const failed = jobs.filter(j => j.status === 'failed').length;
+      const cancelled = jobs.filter(j => j.status === 'cancelled').length;
+      $('job-stats').innerHTML = `
+        <div class="stat"><div class="n">${pending}</div><div class="l">Pending</div></div>
+        <div class="stat"><div class="n">${active}</div><div class="l">Active</div></div>
+        <div class="stat"><div class="n">${done}</div><div class="l">Completed</div></div>
+        <div class="stat"><div class="n">${failed}</div><div class="l">Failed</div></div>
+        <div class="stat"><div class="n">${cancelled}</div><div class="l">Cancelled</div></div>
+        <div class="stat"><div class="n">${jobs.length}</div><div class="l">Total</div></div>
+        <div class="stat"><div class="n">${lastGravity && lastGravity.connected ? '●' : '○'}</div><div class="l">Protocol</div></div>
+        <div class="stat"><div class="n">${worker && worker.running ? '●' : '○'}</div><div class="l">Worker</div></div>`;
+      setWorkerPill(worker);
+      const hideCancelled = $('jobs-hide-cancelled') && $('jobs-hide-cancelled').checked;
+      const hideCompleted = $('jobs-hide-completed') && $('jobs-hide-completed').checked;
+      let view = jobs.slice();
+      if (hideCancelled) view = view.filter(j => j.status !== 'cancelled');
+      if (hideCompleted) view = view.filter(j => j.status !== 'completed');
+      const tbody = $('jobs-body');
+      tbody.innerHTML = '';
+      if (!jobs.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="sub">No pipeline jobs yet — choose Pipeline Job (worker) and Add Job.</td></tr>';
+        return;
+      }
+      if (!view.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="sub">All jobs hidden by filters — uncheck Hide cancelled/completed.</td></tr>';
+        return;
+      }
+      view.forEach(j => {
+        const pct = Math.max(0, Math.min(100, j.progress || 0));
+        const tr = document.createElement('tr');
+        const cancelBtn = isCancelable(j.status)
+          ? `<button class="secondary cancel-job" data-id="${esc(j.id)}" style="font-size:0.7rem;padding:2px 6px" title="Cancel">✕</button>`
+          : '';
+        const retryBtn = (j.status === 'failed' || j.status === 'cancelled' || j.status === 'completed')
+          ? `<button class="secondary retry-job" data-id="${esc(j.id)}" style="font-size:0.7rem;padding:2px 6px" title="Retry / re-encode">↻</button>`
+          : '';
+        const outPath = j.output_path || '';
+        const outName = outPath ? outPath.split('/').pop() : '';
+        const locate = outPath ? locateBtn(outPath, outName) : '';
+        const liveCell = (cancelBtn || retryBtn || locate)
+          ? `<span class="row" style="gap:4px;flex-wrap:nowrap">${cancelBtn}${retryBtn}${locate}</span>`
+          : '<span class="sub">—</span>';
+        const stClass = 'job-status ' + esc(j.status || '');
+        const errHtml = j.error
+          ? `<span class="job-err" title="${esc(j.error)}">${esc(String(j.error).slice(0, 90))}</span>`
+          : '';
+        const title = jobDisplayTitle(j);
+        const urlHint = (j.url && (!j.title || j.title === 'Untitled'))
+          ? `<br><span class="sub" title="${esc(j.url)}">${esc(String(j.url).slice(0, 48))}</span>`
+          : '';
+        tr.innerHTML = `
+          <td>${esc(j.id)}</td>
+          <td title="${esc(j.url || '')}">${esc(title.slice(0, 42))}${urlHint}${outName ? `<br><span class="sub" title="${esc(outPath)}">${esc(outName.slice(0, 36))}</span>` : ''}</td>
+          <td><span class="${stClass}">${esc(j.status)}</span>${j.stage ? ' / ' + esc(j.stage) : ''}${errHtml}</td>
+          <td>
+            ${pct.toFixed(0)}%
+            <div class="progress"><div style="width:${pct}%"></div></div>
+          </td>
+          <td>${esc(j.preset)}</td>
+          <td>${liveCell}</td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.cancel-job').forEach(btn => {
+        btn.addEventListener('click', () => cancelJob(btn.dataset.id));
+      });
+      tbody.querySelectorAll('.retry-job').forEach(btn => {
+        btn.addEventListener('click', () => retryJob(btn.dataset.id));
+      });
+      bindLocateButtons(tbody);
+    }
+
+    async function parseApiJson(res) {
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      const text = await res.text();
+      if (!text) return { ok: false, error: 'Empty response (HTTP ' + res.status + ')' };
+      if (ct.includes('json') || text.trim().startsWith('{')) {
+        try { return JSON.parse(text); } catch (e) {
+          return { ok: false, error: 'Invalid JSON: ' + e.message };
+        }
+      }
+      return { ok: false, error: 'Non-JSON response (HTTP ' + res.status + ') — restart gravity-serve?' };
+    }
+
+    async function cancelJob(id) {
+      const jobId = Number(id);
+      if (!Number.isFinite(jobId) || jobId <= 0) {
+        toast('Cancel failed: invalid job id');
+        return;
+      }
+      try {
+        const res = await fetch('/api/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: jobId })
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          toast('Cancelled job #' + jobId + ' (still listed — status cancelled)');
+          fetchGravity();
+        } else {
+          toast(data.error || 'Cancel failed');
+        }
+      } catch (e) {
+        toast('Cancel failed: ' + e.message);
+      }
+    }
+
+    async function retryJob(id) {
+      const jobId = Number(id);
+      if (!Number.isFinite(jobId) || jobId <= 0) {
+        toast('Retry failed: invalid job id');
+        return;
+      }
+      try {
+        const res = await fetch('/api/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: jobId })
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          toast('Retried job #' + jobId + ' → pending queue');
+          if (data.worker) setWorkerPill(data.worker);
+          fetchGravity();
+        } else {
+          toast(data.error || 'Retry failed');
+        }
+      } catch (e) {
+        toast('Retry failed: ' + e.message);
+      }
+    }
+
+    function mediaUrl(base, name) {
+      if (!name) return '';
+      return base + encodeURIComponent(name);
+    }
+
+    function infoLine(parts) {
+      return parts.filter(Boolean).join(' · ');
+    }
+
+    function renderCatalog(items) {
+      const grid = $('catalog-grid');
+      grid.innerHTML = '';
+      if (!items.length) {
+        grid.innerHTML = '<p class="sub">No visualist catalog items yet — complete worker jobs with gravity prep.</p>';
+        return;
+      }
+      items.slice().reverse().forEach(it => {
+        const mode = it.asc_mode || ((it.gravity_prepared || it.raw_h264_stream) ? 'GRAVITY' : 'FILMIC');
+        const isGravity = mode === 'GRAVITY';
+        const playName = it.play_name || (it.output_path ? it.output_path.split('/').pop() : '');
+        const thumbName = it.thumb_name;
+        const thumbClass = isGravity ? 'asc-gravity' : 'asc-filmic';
+        const thumbInner = thumbName
+          ? `<img src="${mediaUrl('/visualist/', thumbName)}" class="${thumbClass}" alt="ASC ${mode}" loading="lazy" onerror="this.style.display='none'">`
+          : '';
+        const title = it.title || playName || 'Untitled';
+        const src = it.source_url || '';
+        const meta = infoLine([
+          it.duration_label,
+          it.size_label,
+          it.preset,
+          it.zone,
+          playName
+        ]);
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="thumb">
+            ${thumbInner}
+            <span class="asc-label">ASC ${mode}</span>
+          </div>
+          <div class="body">
+            <div class="card-title">${esc(title)}${isGravity ? '<span class="badge">GRAVITY</span>' : '<span class="badge filmic">FILMIC</span>'}</div>
+            <div class="meta">${esc(meta)}</div>
+            ${src ? `<div class="meta" title="${esc(src)}"><a href="${esc(src)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${esc(src)}</a></div>` : ''}
+            <div class="row" style="margin-top:8px;">
+              ${playName && it.playable !== false ? `<button class="secondary" data-play="${mediaUrl('/visualist/', playName)}" data-title="${esc(title)}" data-kind="video">▶ Play</button>` : ''}
+              ${it.output_path ? locateBtn(it.output_path, playName) : ''}
+            </div>
+            ${it.output_path ? `<div class="meta" style="word-break:break-all;" title="${esc(it.output_path)}"><a href="#" class="locate-file" data-path="${esc(it.output_path)}" data-name="${esc(playName || '')}" style="color:var(--accent);text-decoration:none;">${esc(it.output_path)}</a></div>` : ''}
+          </div>`;
+        grid.appendChild(card);
+      });
+      grid.querySelectorAll('[data-play]').forEach(btn => {
+        btn.addEventListener('click', () => openPlayer(btn.dataset.play, btn.dataset.title, btn.dataset.kind));
+      });
+      bindLocateButtons(grid);
+    }
+
+    function renderInterlaterus(items) {
+      const tbody = $('mint-body');
+      tbody.innerHTML = '';
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="sub">No blockcode mints — use GravityDesktop download or interlaterus_desktop.py watch</td></tr>';
+        return;
+      }
+      items.slice().reverse().forEach(it => {
+        const v = it.vertex ? `[${it.vertex.join(',')}]` : '—';
+        const mediaPath = it.media_path || '';
+        const mediaName = mediaPath ? mediaPath.split('/').pop() : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mint-line">${esc(it.pattern_code)}</td>
+          <td>${esc(v)}</td>
+          <td>${esc((it.title || '').slice(0, 28))}</td>
+          <td title="${esc(mediaPath)}">${esc(mediaName || '—')}${mediaPath ? ' ' + locateBtn(mediaPath, mediaName, 'Locate ↗') : ''}</td>
+          <td class="sub">${esc((it.minted_at || '').slice(0, 19))}</td>`;
+        tbody.appendChild(tr);
+      });
+      bindLocateButtons(tbody);
+    }
+
+    function renderDownloads(items, counts) {
+      const grid = $('downloads-grid');
+      if (!grid) return;
+      const stats = $('dl-stats');
+      if (stats) {
+        stats.innerHTML = `
+          <div class="stat"><div class="n">${(counts && counts.downloads) || items.length}</div><div class="l">Downloads</div></div>
+          <div class="stat"><div class="n">${(counts && counts.recs) || 0}</div><div class="l">Rec takes</div></div>
+          <div class="stat"><div class="n">${(counts && counts.wyhiwyrec) || 0}</div><div class="l">WYHIWYREC</div></div>
+          <div class="stat"><div class="n">${items.filter(i => i.kind === 'gif').length}</div><div class="l">GIF</div></div>`;
+      }
+      grid.innerHTML = '';
+      if (!items.length) {
+        grid.innerHTML = '<p class="sub">No direct-h264/gif downloads in ~/Downloads/</p>';
+        return;
+      }
+      items.forEach(it => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const title = it.title || it.name;
+        const mint = it.pattern_code
+          ? `<div class="mint-line">${esc(it.pattern_code)}${it.vertex ? '  v' + esc((it.vertex || []).join('')) : ''}</div>`
+          : '<div class="sub">mint pending</div>';
+        const fullPath = it.path || '';
+        const src = it.source_url || '';
+        const meta = infoLine([
+          it.duration_label,
+          it.size_label,
+          it.res_label,
+          [it.vcodec, it.acodec].filter(Boolean).join('/')
+        ]);
+        card.innerHTML = `
+          <div class="thumb">${it.kind === 'gif' ? 'GIF' : (it.vcodec && /vp9|vp09|av01|^av1/i.test(String(it.vcodec)) ? String(it.vcodec).toUpperCase() : 'H.264')} · ${esc((it.host || it.youtube_id || 'file').toString().slice(0, 12))}${it.seq && it.seq > 1 ? ' · #' + it.seq : ''}</div>
+          <div class="body">
+            <div class="card-title">${esc(title)}<span class="badge">${esc((it.kind || 'h264').toUpperCase())}${it.seq && it.seq > 1 ? ' #' + it.seq : ''}</span></div>
+            <div class="meta">${esc(it.name)}</div>
+            <div class="meta">${esc(meta)}</div>
+            ${src ? `<div class="meta"><a href="${esc(src)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${esc(src)}</a></div>` : ''}
+            ${mint}
+            ${fullPath ? `<div class="meta" style="word-break:break-all;"><a href="#" class="locate-file" data-path="${esc(fullPath)}" data-name="${esc(it.name)}" style="color:var(--accent);text-decoration:none;" title="Open in file manager">${esc(fullPath)}</a></div>` : ''}
+            <div class="row" style="margin-top:8px;">
+              <button class="secondary" data-play="/downloads/${encodeURIComponent(it.name)}" data-title="${esc(title)}" data-kind="${it.kind === 'gif' ? 'gif' : 'video'}">▶ Play</button>
+              ${it.kind !== 'gif' && it.vcodec && /vp9|vp09|av01|^av1/i.test(String(it.vcodec)) && fullPath
+                ? `<button class="secondary" data-convert="${esc(fullPath)}">VP9→H.264</button>` : ''}
+              ${fullPath && it.kind !== 'gif' ? `<button class="secondary" data-norm="${esc(fullPath)}">Norm</button>` : ''}
+              ${locateBtn(fullPath, it.name)}
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+      grid.querySelectorAll('[data-play]').forEach(btn => {
+        btn.addEventListener('click', () => openPlayer(btn.dataset.play, btn.dataset.title, btn.dataset.kind));
+      });
+      grid.querySelectorAll('[data-convert]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const res = await fetch('/api/convert', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ path: btn.dataset.convert })
+            });
+            const data = await parseApiJson(res);
+            if (data.ok) {
+              toast(data.skipped ? (data.message || 'Already H.264') : 'VP9 → H.264 started');
+              if (!data.skipped) {
+                $('dl-status').classList.add('active');
+                $('dl-status-text').textContent = data.message || 'Converting…';
+                pollDlStatus();
+              }
+            } else toast(data.error || 'Convert failed');
+          } catch (e) { toast('Convert failed: ' + e.message); }
+        });
+      });
+      bindLocateButtons(grid);
+      bindNormButtons(grid);
+    }
+
+    function selectedNorm() {
+      const el = $('norm-select');
+      const v = el ? el.value : 'off';
+      return v === 'peak' || v === 'loudness' ? v : 'off';
+    }
+
+    async function applyNorm(path) {
+      const mode = selectedNorm();
+      if (mode === 'off') return toast('Set norm to peak or loudness');
+      try {
+        const res = await fetch('/api/normalize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, mode })
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          toast(data.message || ('norm ' + mode));
+          $('dl-status').classList.add('active');
+          $('dl-status-text').textContent = data.message || ('norm ' + mode + ' …');
+          pollDlStatus();
+        } else toast(data.error || 'Norm failed');
+      } catch (e) { toast('Norm failed: ' + e.message); }
+    }
+
+    function bindNormButtons(root) {
+      if (!root) return;
+      root.querySelectorAll('[data-norm]').forEach(btn => {
+        btn.addEventListener('click', () => applyNorm(btn.dataset.norm));
+      });
+    }
+
+    function recBadgeClass(fn) {
+      if (fn === 'WYHIWYREC') return 'wyhiwy';
+      if (fn === 'net stream') return 'net';
+      return 'rec';
+    }
+
+    function renderRecs(items, counts) {
+      items = Array.isArray(items) ? items : [];
+      const grid = $('recs-grid');
+      const stats = $('rec-stats');
+      const c = counts || {};
+      if (stats) {
+        stats.innerHTML = `
+          <div class="stat"><div class="n">${c.recs || items.length}</div><div class="l">Takes</div></div>
+          <div class="stat"><div class="n">${c.wyhiwyrec || 0}</div><div class="l">WYHIWYREC</div></div>
+          <div class="stat"><div class="n">${c.net_stream || 0}</div><div class="l">Net stream</div></div>
+          <div class="stat"><div class="n">${c.catalog || 0}</div><div class="l">Catalog</div></div>`;
+      }
+      if (!grid) return;
+      grid.innerHTML = '';
+      if (!items.length) {
+        grid.innerHTML = '<p class="sub">No ASC rec files yet — use WYHIWYREC / net stream / catalog in GravityDesktop.</p>';
+        return;
+      }
+      items.forEach(it => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const fn = it.fn || 'rec';
+        const title = it.title || it.stem || it.name;
+        const when = (it.modified || '').replace('T', ' ').slice(0, 19);
+        const video = it.kind === 'rec-video' || (it.ext || '') === 'mp4' || /\.mp4$/i.test(it.name || '');
+        const meta = infoLine([
+          it.duration_label,
+          it.size_label,
+          it.res_label,
+          it.vcodec,
+          it.acodec,
+          it.rate_label,
+          it.ch_label,
+          it.bit_depth ? it.bit_depth + '-bit' : '',
+          (it.ext || '').toUpperCase()
+        ]);
+        card.innerHTML = `
+          <div class="thumb">${esc(video ? fn + ' · mp4' : fn)}</div>
+          <div class="body">
+            <div class="card-title">${esc(title)}<span class="badge ${recBadgeClass(fn)}">${esc(fn)}</span>${video ? '<span class="badge">MP4</span>' : ''}${it.norm && it.norm !== 'off' ? `<span class="badge norm">${esc(it.norm)}</span>` : ''}</div>
+            <div class="meta">${esc(it.name)}</div>
+            <div class="meta">${esc(meta)}${it.rec_format ? ' · ' + esc(it.rec_format) : ''}</div>
+            ${it.source_url ? `<div class="meta"><a href="${esc(it.source_url)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">${esc(it.source_url)}</a></div>` : ''}
+            ${when ? `<div class="meta">${esc(when)}</div>` : ''}
+            <div class="row" style="margin-top:8px;">
+              <button class="secondary" data-play="/downloads/${encodeURIComponent(it.name)}" data-title="${esc(title)}" data-kind="${video ? 'video' : 'audio'}">▶ Play</button>
+              ${it.path ? `<button class="secondary" data-norm="${esc(it.path)}">Norm</button>` : ''}
+              ${locateBtn(it.path || '', it.name)}
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+      grid.querySelectorAll('[data-play]').forEach(btn => {
+        btn.addEventListener('click', () => openPlayer(btn.dataset.play, btn.dataset.title, btn.dataset.kind));
+      });
+      bindLocateButtons(grid);
+      bindNormButtons(grid);
+    }
+
+    function renderPos(data) {
+      const s = data.summary || {};
+      $('pos-stats').innerHTML = `
+        <div class="stat"><div class="n">${s.paired_avd_pos || 0}</div><div class="l">Paired</div></div>
+        <div class="stat"><div class="n">${s.orphans_avd_only || 0}</div><div class="l">AVD only</div></div>
+        <div class="stat"><div class="n">${s.orphans_pos_only || 0}</div><div class="l">POS only</div></div>
+        <div class="stat"><div class="n">${s.vertices_occupied || 0}/16</div><div class="l">Vertices</div></div>`;
+      $('pos-digest').textContent = 'proof_of_spatio (POS) digest: ' + (data.proof_digest || '—');
+      const tbody = $('pos-body');
+      tbody.innerHTML = '';
+      const entries = (data.entries || []).slice(0, 40);
+      if (!entries.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="sub">No positioning data — run: nls-video spatio --rebuild</td></tr>';
+        return;
+      }
+      entries.forEach(e => {
+        const avd = e.avd || {};
+        const pos = e.pos || {};
+        const smc = pos.storage_memory_category || {};
+        let status = 'paired';
+        if (avd.path && !pos.vertex) status = 'AVD only';
+        if (pos.vertex && !avd.path) status = 'POS only';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="sub">${esc((e.id || '').slice(0, 14))}</td>
+          <td>${esc((avd.name || avd.title || '—').slice(0, 28))}<br><span class="sub">${esc(avd.asc_mode || '')}</span></td>
+          <td>${pos.vertex ? esc('[' + pos.vertex.join(',') + ']') : '—'}<br><span class="sub">${esc(pos.pattern_code || '')} zone=${esc(smc.zone || '—')}</span></td>
+          <td>${esc(status)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function fetchPos(rebuild) {
+      const url = rebuild ? '/api/spatio/proof?rebuild=1' : '/api/spatio/proof';
+      const res = await fetch(url);
+      const data = await parseApiJson(res);
+      if (data.ok !== false) renderPos(data);
+    }
+
+    function renderCron(data) {
+      const tasks = data.tasks || [];
+      const on = tasks.filter(t => t.enabled).length;
+      const err = tasks.filter(t => t.last_status === 'error').length;
+      $('cron-stats').innerHTML = `
+        <div class="stat"><div class="n">${tasks.length}</div><div class="l">Tasks</div></div>
+        <div class="stat"><div class="n">${on}</div><div class="l">Enabled</div></div>
+        <div class="stat"><div class="n">${err}</div><div class="l">Errors</div></div>
+        <div class="stat"><div class="n">${(data.handlers || []).length}</div><div class="l">Handlers</div></div>`;
+      const tbody = $('cron-body');
+      tbody.innerHTML = '';
+      if (!tasks.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="sub">No cron tasks — open DB seeds on first tick</td></tr>';
+        return;
+      }
+      tasks.forEach(t => {
+        const tr = document.createElement('tr');
+        const last = (t.last_run || '—').replace('T', ' ').slice(0, 19);
+        const next = (t.next_run || 'due').replace('T', ' ').slice(0, 19);
+        tr.innerHTML = `
+          <td>${esc(t.id)}</td>
+          <td><strong>${esc(t.name)}</strong><br><span class="sub">${esc(t.task_type)}</span></td>
+          <td class="sub">${esc(t.schedule_cron)}<br>${esc(t.interval_sec)}s</td>
+          <td class="sub">${esc(last)}</td>
+          <td>${esc(t.last_status || '—')}${t.last_error ? '<br><span class="sub">' + esc(String(t.last_error).slice(0, 40)) + '</span>' : ''}</td>
+          <td class="sub">${esc(next)}</td>
+          <td>
+            <button class="secondary cron-run" data-id="${esc(t.id)}" style="font-size:0.7rem;padding:2px 6px">Run</button>
+            <button class="secondary cron-toggle" data-id="${esc(t.id)}" style="font-size:0.7rem;padding:2px 6px">${t.enabled ? 'Disable' : 'Enable'}</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll('.cron-run').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const res = await fetch('/api/cron/run', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: Number(btn.dataset.id) })
+            });
+            const data = await res.json();
+            toast(data.ok !== false && data.status !== 'error'
+              ? 'Ran ' + (data.name || 'task') + ': ' + (data.status || 'ok')
+              : (data.error || data.status || 'run failed'));
+            fetchCron();
+          } catch (e) { toast('cron run failed'); }
+        });
+      });
+      tbody.querySelectorAll('.cron-toggle').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          try {
+            const res = await fetch('/api/cron/toggle', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task_id: Number(btn.dataset.id) })
+            });
+            const data = await res.json();
+            if (data.ok) toast((data.task && data.task.name) + ' → ' + (data.task.enabled ? 'enabled' : 'disabled'));
+            else toast(data.error || 'toggle failed');
+            fetchCron();
+          } catch (e) { toast('cron toggle failed'); }
+        });
+      });
+    }
+
+    function renderCronRuns(data) {
+      const tbody = $('cron-runs-body');
+      tbody.innerHTML = '';
+      const runs = data.runs || [];
+      if (!runs.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="sub">No runs yet — click Run or: nls-video cron tick --all</td></tr>';
+        return;
+      }
+      runs.slice(0, 20).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="sub">#${esc(r.id)}</td>
+          <td>${esc(r.task_name || r.task_id)}</td>
+          <td>${esc(r.status || '—')}</td>
+          <td class="sub">${esc((r.started || '').replace('T', ' ').slice(0, 19))}</td>
+          <td class="sub">${esc((r.finished || '—').replace('T', ' ').slice(0, 19))}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function fetchCron() {
+      try {
+        const [tasksRes, runsRes] = await Promise.all([
+          fetch('/api/cron'),
+          fetch('/api/cron/runs?limit=20')
+        ]);
+        const tasks = await tasksRes.json();
+        const runs = await runsRes.json();
+        if (tasks.ok !== false) renderCron(tasks);
+        if (runs.ok !== false) renderCronRuns(runs);
+      } catch (e) { /* optional until server restart */ }
+    }
+
+    function renderAsc(data) {
+      const jobs = data.jobs || [];
+      const cat = data.catalog || [];
+      const lines = [];
+      lines.push('⿲⿳⿴⿵⿶⿷⿸⿹⿺⿻⿰  gravity_update LIVE  ⿲⿳⿴⿵⿶⿷⿸⿹⿺⿻⿰');
+      lines.push('timestamp: ' + (data.timestamp || new Date().toISOString()));
+      lines.push('jobs: ' + jobs.length + '  catalog: ' + cat.length);
+      lines.push('');
+      lines.push('⿴ ASC SIDE (filmic)          ⿴ SC SIDE (storage_memory)');
+      jobs.slice(0, 6).forEach(j => {
+        lines.push(`  #${j.id} ${(j.title||'').slice(0,24)}  ${j.status} ${(j.progress||0).toFixed(0)}%`);
+      });
+      cat.slice(0, 4).forEach(c => {
+        const smc = c.storage_memory_category || {};
+        lines.push(`  ${(c.title||'?').slice(0,20)} grav=${!!(c.gravity_prepared||c.raw_h264_stream)} zone=${smc.zone||'—'}`);
+      });
+      lines.push('');
+      lines.push('⿺ [END symmetric ASC vs SC] ⿺');
+      $('asc-live').textContent = lines.join('\n');
+    }
+
+    async function fetchVersion() {
+      try {
+        const res = await fetch('/api/version');
+        const data = await res.json();
+        if (data.version) $('version-pill').textContent = 'v' + data.version;
+      } catch (e) { /* optional */ }
+    }
+
+    async function fetchGravity() {
+      try {
+        const res = await fetch('/api/gravity');
+        const data = await res.json();
+        lastGravity = data;
+        setConn(!!data.connected);
+        let worker = data.worker;
+        if (!worker) {
+          try {
+            const wr = await fetch('/api/worker');
+            worker = await wr.json();
+          } catch (e2) { worker = null; }
+        }
+        renderJobs(data.jobs || [], worker);
+        renderCatalog(data.catalog || []);
+        if (currentTab === 'asc') renderAsc(data);
+      } catch (e) {
+        setConn(false);
+        setWorkerPill(null);
+      }
+    }
+
+    async function fetchInterlaterus() {
+      const res = await fetch('/api/interlaterus');
+      const data = await res.json();
+      renderInterlaterus(data.items || []);
+    }
+
+    async function fetchDownloads() {
+      try {
+        const res = await fetch('/api/downloads');
+        const data = await res.json();
+        try { renderDownloads(data.items || [], data.counts); }
+        catch (e) { console.warn('renderDownloads', e); }
+        try { renderRecs(data.recs || [], data.counts); }
+        catch (e) { console.warn('renderRecs', e); }
+      } catch (e) {
+        try {
+          const res = await fetch('/api/recs');
+          const data = await res.json();
+          renderRecs(data.items || [], data.counts);
+        } catch (e2) {
+          const g = $('recs-grid');
+          if (g && !g.children.length) g.innerHTML = '<p class="sub">Could not load rec catalog.</p>';
+        }
+      }
+    }
+
+    function refreshActive() {
+      if (currentTab === 'interlaterus') fetchInterlaterus();
+      if (currentTab === 'downloads' || currentTab === 'recs') fetchDownloads();
+      if (currentTab === 'pos') fetchPos(false);
+      if (currentTab === 'scheduled') fetchCron();
+      if (currentTab === 'asc' && lastGravity) renderAsc(lastGravity);
+    }
+
+    const posRebuildBtn = $('pos-rebuild-btn');
+    if (posRebuildBtn) {
+      posRebuildBtn.addEventListener('click', async () => {
+        toast('Rebuilding position index…');
+        await fetchPos(true);
+        toast('Position index rebuilt');
+      });
+    }
+    const posOrphansBtn = $('pos-orphans-btn');
+    if (posOrphansBtn) {
+      posOrphansBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/positioning/orphans');
+          const data = await res.json();
+          const s = data.summary || {};
+          toast('Orphans AVD-only=' + (s.orphans_avd_only || 0) + ' POS-only=' + (s.orphans_pos_only || 0));
+          if (data.ok !== false) {
+            // Reuse pos table with orphan-focused rows
+            const entries = [
+              ...(data.avd_only_entries || []).map(e => ({ ...e, _orphan: 'AVD only' })),
+              ...(data.pos_only_entries || []).map(e => ({ ...e, _orphan: 'POS only' })),
+            ];
+            renderPos({
+              ok: true,
+              summary: s,
+              proof_digest: data.proof_digest,
+              entries: entries.length ? entries : (await (await fetch('/api/spatio/proof')).json()).entries
+            });
+          }
+        } catch (e) { toast('orphans fetch failed'); }
+      });
+    }
+
+    function openPlayer(src, title, kind) {
+      const v = $('player');
+      const a = $('player-audio');
+      const g = $('player-gif');
+      const audio = kind === 'audio' || /\.(wav|mp3|m4a|flac|aac|ogg)(\?|$)/i.test(src || '');
+      const gif = kind === 'gif' || /\.gif(\?|$)/i.test(src || '');
+      $('player-title').textContent = title ? 'ASC • ' + title : 'ASC playback';
+      v.pause(); a.pause();
+      v.removeAttribute('src'); a.removeAttribute('src');
+      if (g) { g.removeAttribute('src'); g.style.display = 'none'; }
+      v.load(); a.load();
+      if (gif) {
+        v.style.display = 'none';
+        a.style.display = 'none';
+        if (g) {
+          g.style.display = 'block';
+          g.src = src;
+        }
+        $('player-modal').classList.add('open');
+      } else if (audio) {
+        v.style.display = 'none';
+        a.style.display = 'block';
+        a.src = src;
+        $('player-modal').classList.add('open');
+        a.play().catch(() => toast('Playback failed — check file exists and Range support'));
+      } else {
+        a.style.display = 'none';
+        v.style.display = 'block';
+        v.src = src;
+        v.type = 'video/mp4';
+        $('player-modal').classList.add('open');
+        v.play().catch(() => toast('Playback failed — check file exists and gravity-serve Range support'));
+      }
+    }
+
+    $('close-player').addEventListener('click', () => {
+      $('player').pause();
+      $('player-audio').pause();
+      const g = $('player-gif');
+      if (g) { g.removeAttribute('src'); g.style.display = 'none'; }
+      $('player-modal').classList.remove('open');
+    });
+
+    function syncModeUi() {
+      const pipeline = $('mode-select').value === 'pipeline';
+      $('preset-select').style.display = pipeline ? '' : 'none';
+      $('gravity-wrap').style.display = pipeline ? '' : 'none';
+      $('add-btn').textContent = pipeline ? 'Add Job' : 'H.264 Direct';
+      const gifBtn = $('gif-btn');
+      if (gifBtn) gifBtn.style.display = pipeline ? 'none' : '';
+      $('mode-hint').textContent = pipeline
+        ? 'Pipeline → worker queue → download at 360/1080/2160p then H.264 convert (no 1080p downscale on 4K presets)'
+        : 'Direct → 360/1080/2160p DASH, VP9→H.264 same pixels, ~/Downloads/direct-h264-*.mp4 + mint';
+    }
+    $('mode-select').addEventListener('change', syncModeUi);
+    syncModeUi();
+
+    async function startWorker() {
+      try {
+        const res = await fetch('/api/worker/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          toast(data.started ? 'Worker started (embedded)' : (data.hint || data.reason || 'Worker already running'));
+          setWorkerPill(data.worker || null);
+          fetchGravity();
+        } else toast(data.error || 'Worker start failed');
+      } catch (e) { toast('Worker start failed: ' + e.message); }
+    }
+
+    async function recoverStaleJobs() {
+      try {
+        const res = await fetch('/api/worker/recover', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          const n = data.requeued_count || (data.requeued || []).length;
+          toast(n ? ('Requeued stale jobs: ' + (data.requeued || []).join(', ')) : 'No stale jobs to recover');
+          setWorkerPill(data.worker || null);
+          fetchGravity();
+        } else toast(data.error || 'Recover failed');
+      } catch (e) { toast('Recover failed: ' + e.message); }
+    }
+
+    async function stopAndRefreshJobs() {
+      try {
+        const res = await fetch('/api/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}'
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          const n = data.cancelled_count || (data.cancelled || []).length;
+          toast(n ? ('Stopped ' + n + ' live job(s) — refreshed') : 'No live jobs to stop — refreshed');
+          if (Array.isArray(data.jobs)) {
+            lastGravity = { ...(lastGravity || {}), jobs: data.jobs, worker: data.worker || (lastGravity && lastGravity.worker) };
+            renderJobs(data.jobs, data.worker || (lastGravity && lastGravity.worker));
+          }
+          fetchGravity();
+        } else toast(data.error || 'Stop failed');
+      } catch (e) { toast('Stop failed: ' + e.message); }
+    }
+
+    const workerStartBtn = $('worker-start-btn');
+    if (workerStartBtn) workerStartBtn.addEventListener('click', startWorker);
+    const workerRecoverBtn = $('worker-recover-btn');
+    if (workerRecoverBtn) workerRecoverBtn.addEventListener('click', recoverStaleJobs);
+    const stopRefreshBtn = $('jobs-stop-refresh-btn');
+    if (stopRefreshBtn) stopRefreshBtn.addEventListener('click', stopAndRefreshJobs);
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const modal = $('player-modal');
+      if (modal && modal.classList.contains('open')) {
+        $('close-player').click();
+        return;
+      }
+      stopAndRefreshJobs();
+    });
+    const hideCancelledEl = $('jobs-hide-cancelled');
+    if (hideCancelledEl) hideCancelledEl.addEventListener('change', () => {
+      if (lastGravity) renderJobs(lastGravity.jobs || [], lastGravity.worker);
+      else fetchGravity();
+    });
+    const hideCompletedEl = $('jobs-hide-completed');
+    if (hideCompletedEl) hideCompletedEl.addEventListener('change', () => {
+      if (lastGravity) renderJobs(lastGravity.jobs || [], lastGravity.worker);
+      else fetchGravity();
+    });
+
+    async function startDirectOrPipeline(gif) {
+      const url = $('url-input').value.trim();
+      if (!url) return toast('Enter a URL');
+      const pipeline = $('mode-select').value === 'pipeline';
+      try {
+        const res = await fetch(pipeline ? '/api/add' : '/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pipeline ? {
+            url,
+            preset: $('preset-select').value,
+            gravity: $('gravity-check').checked,
+            height: parseInt(($('res-select') && $('res-select').value) || '2160', 10)
+          } : {
+            url,
+            gif: !!gif,
+            mint: true,
+            height: parseInt(($('res-select') && $('res-select').value) || '2160', 10),
+            vacuum: !!( $('vacuum-check') && $('vacuum-check').checked ),
+            tls_ja3: !!( $('tls-ja3-check') && $('tls-ja3-check').checked ),
+            detail: !!( $('vac-detail-check') && $('vac-detail-check').checked ),
+            norm: selectedNorm()
+          })
+        });
+        const data = await parseApiJson(res);
+        if (data.ok) {
+          if (pipeline) {
+            const w = data.worker || {};
+            if (w.running) {
+              toast('Added job #' + data.job_id + ' → worker queue');
+            } else {
+              toast('Added job #' + data.job_id + ' (worker off — click Start worker)');
+            }
+            if (data.worker) setWorkerPill(data.worker);
+          } else {
+            $('dl-status').classList.add('active');
+            $('dl-status-text').textContent = 'Starting direct download…';
+            $('dl-status-bar').style.width = '0%';
+            pollDlStatus();
+          }
+          fetchGravity();
+        } else toast(data.error || 'Request failed');
+      } catch (e) {
+        toast('Request failed: ' + e.message);
+      }
+    }
+    function loadVacPrefs() {
+      try {
+        if (localStorage.getItem('gs_vacuum') === '1' && $('vacuum-check')) $('vacuum-check').checked = true;
+        if (localStorage.getItem('gs_vac_detail') === '1' && $('vac-detail-check')) $('vac-detail-check').checked = true;
+        if (localStorage.getItem('gs_tls_ja3') === '0' && $('tls-ja3-check')) $('tls-ja3-check').checked = false;
+      } catch (e) {}
+      if ($('vac-detail-check') && $('vac-detail-check').checked && $('vac-log')) $('vac-log').classList.add('show');
+    }
+    function saveVacPref(key, on) {
+      try { localStorage.setItem(key, on ? '1' : '0'); } catch (e) {}
+    }
+    if ($('vacuum-check')) $('vacuum-check').addEventListener('change', e => saveVacPref('gs_vacuum', e.target.checked));
+    if ($('vac-detail-check')) $('vac-detail-check').addEventListener('change', e => {
+      saveVacPref('gs_vac_detail', e.target.checked);
+      if ($('vac-log')) $('vac-log').classList.toggle('show', e.target.checked);
+    });
+    if ($('tls-ja3-check')) $('tls-ja3-check').addEventListener('change', e => saveVacPref('gs_tls_ja3', e.target.checked));
+    async function refreshVacLog() {
+      if ($('vac-log')) $('vac-log').classList.add('show');
+      if ($('vac-detail-check')) {
+        $('vac-detail-check').checked = true;
+        saveVacPref('gs_vac_detail', true);
+      }
+      try {
+        const res = await fetch('/api/vacuum/log?limit=80&t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        const data = await res.json();
+        const live = (data.log || []).join('\n');
+        const tail = (data.file_tail || []).map(l => {
+          try { const o = JSON.parse(l); return (o.ts ? o.ts + '  ' : '') + (o.msg || l); } catch (e) { return l; }
+        }).join('\n');
+        const body = (live ? live + '\n' : '') + (tail ? '--- file ---\n' + tail : '(no vacuum events yet)');
+        if ($('vac-log')) $('vac-log').textContent = body;
+      } catch (e) {
+        toast('vacuum log: ' + e.message);
+      }
+    }
+    if ($('vac-log-btn')) $('vac-log-btn').addEventListener('click', refreshVacLog);
+    if ($('vac-clear-btn')) $('vac-clear-btn').addEventListener('click', async () => {
+      try {
+        await fetch('/api/vacuum/clear', { method: 'POST', cache: 'no-store' });
+        if ($('vac-log')) $('vac-log').textContent = '(cleared)';
+        toast('vacuum log cleared');
+        await refreshVacLog();
+      } catch (e) {
+        toast('clear failed: ' + e.message);
+      }
+    });
+    loadVacPrefs();
+
+    $('add-btn').addEventListener('click', () => startDirectOrPipeline(false));
+    const gifBtn = $('gif-btn');
+    if (gifBtn) gifBtn.addEventListener('click', () => startDirectOrPipeline(true));
+
+    $('url-input').addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const u = ($('url-input').value || '').toLowerCase();
+      const asGif = /\.gif(\?|$)/.test(u) || u.includes('/gifs/') || u.includes('giphy.com')
+        || u.includes('tenor.com') || /(?:x\.com|twitter\.com)\/(?:[^/]+\/status|i\/status)\//.test(u);
+      startDirectOrPipeline(asGif);
+    });
+
+    $('open-dl-btn').addEventListener('click', async () => {
+      await fetch('/api/open-downloads', { method: 'POST' });
+      toast('Opened ~/Downloads/');
+    });
+
+    let lastTimePayload = null;
+
+    async function fetchTime() {
+      try {
+        const res = await fetch('/api/time');
+        lastTimePayload = await res.json();
+        renderClock();
+      } catch (e) { /* keep last */ }
+    }
+
+    function renderClock() {
+      const el = $('clock');
+      const d = lastTimePayload;
+      if (!d || !d.utc) {
+        el.textContent = '';
+        return;
+      }
+      const derived = d.derived || {};
+      const ny = derived.new_york ? derived.new_york.split(' ')[1] : '—';
+      const lon = derived.london ? derived.london.split(' ')[1] : '—';
+      const hk = derived.hong_kong ? derived.hong_kong.split(' ')[1] : '—';
+      const la = derived.los_angeles ? derived.los_angeles.split(' ')[1] : '—';
+      const loc = d.local ? d.local.split(' ')[1] : '—';
+      const locTz = (d.local_tz || 'local').replace('America/', '').replace('Europe/', '').replace('Asia/', '');
+      el.textContent = 'UTC ' + (d.utc.split(' ')[1] || d.utc)
+        + ' ⊳ ' + locTz + ' ' + loc
+        + ' · NY ' + ny + ' · LON ' + lon + ' · HK ' + hk + ' · LA ' + la;
+    }
+
+    function tickClock() {
+      if (lastTimePayload) renderClock();
+    }
+
+    setInterval(() => {
+      fetchGravity();
+      if (currentTab === 'interlaterus') fetchInterlaterus();
+      if (currentTab === 'downloads' || currentTab === 'recs') fetchDownloads();
+      if (currentTab === 'pos') fetchPos(false);
+      if (currentTab === 'scheduled') fetchCron();
+    }, 2000);
+    setInterval(fetchTime, 1000);
+
+    window.addEventListener('hashchange', () => showTab((location.hash || '').replace('#','')));
+    const bootTab = (location.hash || '').replace('#','') || 'jobs';
+    if (bootTab && bootTab !== 'jobs') showTab(bootTab);
+
+    fetchVersion();
+    fetchTime();
+    fetchGravity();
+    fetchInterlaterus();
+    fetchDownloads();
+    fetchPos(false);
+    fetchCron();
+    pollDlStatus();
+    tickClock();
+  </script>
+</body>
+</html>

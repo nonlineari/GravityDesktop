@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+java/*.class
+java/out/
+.pytest_cache/
+*.film.json
+analysis/fixtures/*.wav
+analysis/fixtures/*.mp4

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GravityDesktop audio architecture</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1180px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; font-weight: 700; }
+  .sub { margin: 8px 0 18px; color: #8ea0b5; font-size: 13px; }
+  .band { margin-bottom: 8px; }
+  .label { font-size: 11px; letter-spacing: 0.14em; color: #5ae0d0; margin: 0 0 6px; }
+  .row { display: flex; gap: 12px; }
+  .card { flex: 1; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px 13px; }
+  .card h2 { margin: 0 0 6px; font-size: 14px; }
+  .card p { margin: 0; font-size: 12px; line-height: 1.45; color: #c5d0dc; }
+  .wy h2 { color: #e85a6a; } .net h2 { color: #5ae0d0; } .cat h2 { color: #9be7ff; }
+  .wy { border-color: #e85a6a; } .net { border-color: #5ae0d0; } .cat { border-color: #9be7ff; }
+  .arrow { text-align: center; color: #5ae0d0; font-size: 16px; line-height: 1; margin: 2px 0 6px; letter-spacing: 0.35em; }
+  .wide { background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 16px; }
+  .wide h2 { margin: 0 0 6px; font-size: 14px; color: #9be7ff; }
+  .wide p { margin: 0; font-size: 12px; line-height: 1.45; color: #c5d0dc; }
+  .chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .chip { font-size: 11px; padding: 3px 8px; border-radius: 4px; background: #0b1020; border: 1px solid #3a4858; color: #d7e0ea; }
+  .fork { display: flex; gap: 12px; }
+  .fork .wide { flex: 1; }
+  .foot { margin-top: 12px; font-size: 11px; color: #8ea0b5; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>GRAVITYDESKTOP AUDIO</h1>
+  <p class="sub">Live path in GravityDesktop.java · capture, encode, normalize, then gravity channel split</p>
+
+  <div class="band">
+    <p class="label">1  ARM A FUNCTION · REC STARTS IT</p>
+    <div class="row">
+      <div class="card wy">
+        <h2>WYHIWYREC</h2>
+        <p>What you hear is what you record. ffmpeg reads the PulseAudio monitor of the selected out: sink at 48 kHz stereo.</p>
+      </div>
+      <div class="card net">
+        <h2>net stream</h2>
+        <p>Icecast or HLS from the bar URL, or yt-dlp best-audio piped into ffmpeg. NTS /radio maps to stream or stream2.</p>
+      </div>
+      <div class="card cat">
+        <h2>catalog</h2>
+        <p>The selected ASC row. ffmpeg reads that file. AAC plus copy keeps the bitstream. Otherwise it re-encodes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼ ▼ ▼</div>
+
+  <div class="band">
+    <p class="label">2  LIVE ENCODE · addAscAudioEncode</p>
+    <div class="wide">
+      <h2>soxr 48 kHz · precision 28 · video discarded</h2>
+      <p>WAV 48k/24 pcm_s24le · WAV 48k/16 pcm_s16le · FLAC s32 · AAC 256k twoloop · MP3 320k libmp3lame. MP3 copy on a direct HTTP net stream, or AAC copy on a catalog file, skips the resample.</p>
+      <div class="chips">
+        <span class="chip">~/Downloads/asc-rec-*</span>
+        <span class="chip">sidecar .rec.json</span>
+        <span class="chip">sig meter is a second ffmpeg, not the take</span>
+        <span class="chip">hear = ffplay only if the sink is silent</span>
+      </div>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+
+  <div class="band">
+    <p class="label">3  STOP · norm BOX</p>
+    <div class="row">
+      <div class="card"><h2 style="color:#8ea0b5">off</h2><p>The take stays as encoded. Default.</p></div>
+      <div class="card"><h2 style="color:#e8c45a">peak</h2><p>Constant gain. Sample peak lands on −1 dBFS.</p></div>
+      <div class="card"><h2 style="color:#e8c45a">loudness</h2><p>EBU R128 linear gain to −23 LUFS. True peak −1.5 dBTP.</p></div>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+
+  <div class="band">
+    <p class="label">4  GRAVITY CHECKBOX · ONE GAIN FOR THE PROGRAMME</p>
+    <div class="fork">
+      <div class="wide">
+        <h2>measure, then pan, then channelsplit</h2>
+        <p>The same gain sits in front of an identity pan. Discrete WAV packets stay in balance. Cap is 8 channels. Each packet is pcm_s24le at 48 kHz.</p>
+      </div>
+      <div class="wide">
+        <h2>amerge → mix.wav</h2>
+        <p>FL … LFE recombine to the layout. Folder is &lt;file&gt;.gravity/. Sidecar is &lt;file&gt;.gravity.json. The download MP4 is left as captured.</p>
+      </div>
+    </div>
+  </div>
+  <p class="foot">Source of truth: ~/Downloads/GravityDesktop/GravityDesktop.java · norm targets NORM_PEAK_DBFS −1.0 · NORM_LOUDNESS_LUFS −23.0 · NORM_TRUE_PEAK_DBTP −1.5 · NORM_LRA 11</p>
+</div>
+</body>
+</html>

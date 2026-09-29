@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audio normalization</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1100px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; background: #121828; border: 1px solid #e8c45a; border-radius: 8px; padding: 14px 16px 8px; }
+  h2 { margin: 0 0 4px; font-size: 16px; color: #e8c45a; }
+  .role { margin: 0 0 8px; font-size: 12px; color: #8ea0b5; }
+  ol { margin: 0; padding: 0 0 8px 18px; }
+  li { font-size: 12.5px; line-height: 1.45; margin: 0 0 8px; }
+  code { color: #9be7ff; }
+  .apply { margin-top: 14px; display: flex; gap: 14px; }
+  .box { flex: 1; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .box h2 { color: #5ae0d0; font-size: 14px; }
+  .box p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+  .skip { margin-top: 14px; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .skip h2 { color: #9be7ff; font-size: 14px; margin-bottom: 6px; }
+  .skip p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>NORMALIZATION</h1>
+  <p class="sub">One norm box, shared by the recorder and by gravity. off is the default. Peak and loudness are both constant-gain: the whole programme moves by one amount. Measurement happens after the take is closed, because the gain depends on the whole file.</p>
+  <div class="cols">
+    <div class="col">
+      <h2>peak</h2>
+      <p class="role">sample peak → −1.0 dBFS</p>
+      <ol>
+        <li>ffmpeg reads <code>0:a:0</code> through <code>volumedetect</code>.</li>
+        <li><code>parseMaxVolumeDb</code> keeps the last <code>max_volume</code> line.</li>
+        <li>gain = −1.0 − max_volume.</li>
+        <li>Filter is <code>volume=&lt;gain&gt;dB</code>, three decimal places.</li>
+        <li>A non-finite reading, or a gain smaller than 0.05 dB, writes no filter.</li>
+      </ol>
+    </div>
+    <div class="col">
+      <h2>loudness</h2>
+      <p class="role">EBU R128 → −23.0 LUFS · true peak −1.5 dBTP · LRA 11</p>
+      <ol>
+        <li>Pass 1: <code>loudnorm=I=-23:TP=-1.5:LRA=11:print_format=json</code>.</li>
+        <li>Read input_i, input_tp, input_lra, input_thresh, target_offset.</li>
+        <li>Pass 2: the same targets plus those measurements and <code>linear=true</code>.</li>
+        <li>Skip when integrated loudness is already within 0.5 LU and true peak is already at or under −1.5 dBTP.</li>
+        <li>An <code>-inf</code> measurement writes no filter.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="apply">
+    <div class="box">
+      <h2>recorder · STOP</h2>
+      <p><code>rewriteAudioNormalized</code> encodes to a sibling <code>.norm-tmp</code> file, then replaces the take. The filter is followed by soxr 48 kHz. Codec follows the extension: pcm_s24le, pcm_s16le, FLAC, AAC twoloop 256k, or MP3 320k. A failed encode deletes the temp and keeps the original. SAVE waits until this rewrite finishes.</p>
+    </div>
+    <div class="box">
+      <h2>gravity · split</h2>
+      <p>The same filter string is prefixed onto <code>[0:a]</code> before <code>pan</code> and <code>channelsplit</code>. One gain for every channel, so the image stays put. <code>mix.wav</code> is the amerge of those packets. A download MP4 is not rewritten.</p>
+    </div>
+  </div>
+  <div class="skip">
+    <h2>SECOND PASS</h2>
+    <p>When gravity runs on a take that STOP just normalized, the measure runs again. A file already on target produces no second filter. The status line says norm held. Silence and a missing audio stream also produce no filter; the split still runs on the original programme.</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "tracks": 6,
+  "views": ["PLAN", "ELEVATION", "MODEL"],
+  "indexes": ["fft", "yolo", "ocr", "ipa"],
+  "host": "GravityDesktopFilm",
+  "runtime": "graalvm-ce-21",
+  "ml": "cpython-py",
+  "schema": "gravity.film-language.v1",
+  "roles": ["WNIM", "FLHS", "ILL(T)", "ILY(R)", "SLEG(L)", "LOGOS(Q)"],
+  "glyphs": ["k_stand", "ss_ll", "sol_f", "helix_cut", "k_arrow", "fork"],
+  "score": {"ipa": 0.35, "yolo": 0.25, "ocr": 0.15, "harmonic": 0.15, "glyph": 0.10, "threshold": 0.55},
+  "modules": {
+    "py": ["tokens", "dual_lattice", "harmonic", "phonetic", "viseme", "yolo_search", "ocr_frames", "search", "indexer", "prompt_compiler", "splice", "cli"],
+    "qt": ["qt_env", "theme", "plan_view", "elevation_view", "model_view", "emp_armature"],
+    "java": ["GravityDesktopFilm", "FilmDoc", "PlanPanel", "ElevationPanel", "ModelPanel", "FilmLivecode", "IdcLoop", "IdleSurface"]
+  }
+}

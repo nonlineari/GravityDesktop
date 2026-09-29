@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tesseract</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1120px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #e8c45a; }
+  .sub { margin: 8px 0 14px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .layers { display: flex; gap: 16px; }
+  .layer { flex: 1; background: #121828; border: 1px solid #e8c45a; border-radius: 8px; padding: 12px 14px 14px; }
+  .layer h2 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.1em; color: #e8c45a; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; }
+  th { color: #8ea0b5; font-weight: 500; padding: 4px; }
+  td { background: #0b1020; border: 4px solid #121828; padding: 8px 4px; color: #d7e0ea; }
+  .origin { color: #e8c45a; }
+  .maps { display: flex; gap: 12px; margin-top: 14px; }
+  .box { flex: 1; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .box h2 { margin: 0 0 6px; font-size: 13px; color: #9be7ff; letter-spacing: 0.08em; }
+  .box p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+  code { color: #e8c45a; }
+  .walk { margin-top: 14px; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .walk h2 { margin: 0 0 8px; font-size: 13px; color: #5ae0d0; letter-spacing: 0.08em; }
+  .steps { font-size: 12.5px; line-height: 1.6; color: #d7e0ea; }
+  .dim { color: #8ea0b5; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>TESSERACT</h1>
+  <p class="sub">The address space of a minted file. Four binary axes, sixteen vertices. An edge flips exactly one axis: X, Y, Z, or T. Axes are named by the tetragrammaton Y H W H.</p>
+  <div class="layers">
+    <div class="layer">
+      <h2>t = 0 · TIME BIT OFF</h2>
+      <table>
+        <tr><th></th><th>z=0</th><th>z=0</th><th>z=1</th><th>z=1</th></tr>
+        <tr><th></th><th>x=0</th><th>x=1</th><th>x=0</th><th>x=1</th></tr>
+        <tr><th>y=0</th><td class="origin">0,0,0,0</td><td>1,0,0,0</td><td>0,0,1,0</td><td>1,0,1,0</td></tr>
+        <tr><th>y=1</th><td>0,1,0,0</td><td>1,1,0,0</td><td>0,1,1,0</td><td>1,1,1,0</td></tr>
+      </table>
+    </div>
+    <div class="layer">
+      <h2>t = 1 · TIME BIT ON</h2>
+      <table>
+        <tr><th></th><th>z=0</th><th>z=0</th><th>z=1</th><th>z=1</th></tr>
+        <tr><th></th><th>x=0</th><th>x=1</th><th>x=0</th><th>x=1</th></tr>
+        <tr><th>y=0</th><td>0,0,0,1</td><td>1,0,0,1</td><td>0,0,1,1</td><td>1,0,1,1</td></tr>
+        <tr><th>y=1</th><td>0,1,0,1</td><td>1,1,0,1</td><td>0,1,1,1</td><td>1,1,1,1</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="maps">
+    <div class="box">
+      <h2>HASH → VERTEX</h2>
+      <p><code>vertex_from_digest</code> reads hex digits 0, 1, 2, 3 of the sha256. The low bit of each digit is x, y, z, t. The same file always returns the same vertex. Cells may hold more than one mint.</p>
+    </div>
+    <div class="box">
+      <h2>HASH → PATTERN</h2>
+      <p>First eight hex digits select one code per axis. Spatial AB AABB ABAB ABBA. Rhythm 2:4 3:3 4:4 5:3. Structure P&amp;B P|B P→B P←B. Transform F1 F2 F3 F4. Owner default is AABB.3:3.P|B.F2.</p>
+    </div>
+    <div class="box">
+      <h2>PROBE → VECTOR</h2>
+      <p><code>metadata_vector</code> is the audio_vector: duration, size, bitrate, aspect. It is stored on the vertex. It does not choose the vertex. The vertex is the address. The vector is the measurement.</p>
+    </div>
+  </div>
+  <div class="walk">
+    <h2>GRAY WALK · ONE BIT · THEN THE LOOP CLOSES</h2>
+    <p class="steps">0000 <span class="dim">X</span> 1000 <span class="dim">Y</span> 1100 <span class="dim">X</span> 0100 <span class="dim">Z</span> 0110 <span class="dim">X</span> 1110 <span class="dim">Y</span> 1010 <span class="dim">X</span> 0010 <span class="dim">T</span> 0011 ··· <span class="dim">T</span> 0000</p>
+    <p class="steps">Bits are written x y z t. <code>apriori_loop.py</code> builds this binary-reflected 4-bit Gray code. <code>cycle_next</code> steps one edge. Sigma-9 is the 9-byte GRAVITY handshake that opens the live protocol. It is not a coordinate on this cube.</p>
+  </div>
+</div>
+</body>
+</html>

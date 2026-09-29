@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Position</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 980px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .pair { display: flex; gap: 12px; align-items: stretch; }
+  .card { flex: 1; background: #121828; border-radius: 8px; padding: 14px 16px; }
+  .avd { border: 1px solid #9be7ff; } .pos { border: 1px solid #e8c45a; }
+  h2 { margin: 0 0 8px; font-size: 15px; }
+  .avd h2 { color: #9be7ff; } .pos h2 { color: #e8c45a; }
+  li { font-size: 12.5px; line-height: 1.45; margin: 0 0 6px; }
+  ul { margin: 0; padding-left: 18px; }
+  .mid { width: 120px; align-self: center; text-align: center; color: #5ae0d0; font-size: 12px; letter-spacing: 0.08em; }
+  .grid { display: flex; gap: 12px; margin-top: 14px; }
+  .box { flex: 1; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .box h2 { color: #5ae0d0; font-size: 13px; letter-spacing: 0.08em; }
+  .box p { margin: 0; font-size: 12.5px; line-height: 1.45; }
+  code { color: #9be7ff; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>POSITION</h1>
+  <p class="sub">pos_reconcile joins the audiovisual file to its tesseract cell. AVD is the media. POS is the vertex. A paired entry has both. The proof hashes the index.</p>
+  <div class="pair">
+    <div class="card avd">
+      <h2>AVD · the file</h2>
+      <ul>
+        <li>Recent downloads and visualist outputs.</li>
+        <li>asc_mode FILMIC, or GRAVITY when the visualist row is gravity_prepared.</li>
+        <li>Sidecar &lt;file&gt;.interlaterus.json supplies sha256, pattern, and vertex when the mint has run.</li>
+        <li>Path, name, and modified time stay with the bytes on disk.</li>
+      </ul>
+    </div>
+    <div class="mid">SHA256<br>PAIRS<br>→</div>
+    <div class="card pos">
+      <h2>POS · the cell</h2>
+      <ul>
+        <li>Authoritative vertex map is blockcode_registry.db, keyed by sha256.</li>
+        <li>Each record: pattern_code, vertex [x,y,z,t], media path, source URL, minted time.</li>
+        <li>storage_memory_category adds zone, memory, location, V, and Bandwidth.</li>
+        <li>Interstellar or nonlineari titles use interstellar-zone-alpha. Others use default-zone.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="box">
+      <h2>WHERE IT LANDS</h2>
+      <p><code>~/.local/share/interlaterus-desktop/blockcode_registry.db</code><br><code>nls_media_catalog.json</code> beside that database<br><code>~/.local/share/nls-video/position_index.json</code><br><code>proof-of-spatio.json</code></p>
+    </div>
+    <div class="box">
+      <h2>PROOF OF SPATIO</h2>
+      <p>Canonical JSON of the entries, then sha256. The proof records entry count, orphan lists, vertex histogram, and tesseract_capacity 16. Rebuilding the index rebuilds the proof.</p>
+    </div>
+    <div class="box">
+      <h2>OCCUPANCY</h2>
+      <p>Sixteen cells. A content hash may share a cell with another file. vertex_histogram counts how many paired records sit on each vertex. Orphans are AVD without POS, or POS without a file still on disk.</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

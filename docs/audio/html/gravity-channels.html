@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gravity channels</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1180px; box-sizing: border-box; padding: 32px 36px 24px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .flow { display: flex; gap: 8px; align-items: stretch; }
+  .node { flex: 1; background: #121828; border: 1px solid #5ae0d0; border-radius: 8px; padding: 10px 12px; }
+  .node h2 { margin: 0 0 6px; font-size: 13px; color: #5ae0d0; letter-spacing: 0.06em; }
+  .node p { margin: 0; font-size: 12px; line-height: 1.4; }
+  .arr { align-self: center; color: #5ae0d0; font-size: 18px; }
+  h3 { margin: 16px 0 8px; font-size: 12px; letter-spacing: 0.14em; color: #9be7ff; font-weight: 600; }
+  .layouts { display: flex; flex-direction: column; gap: 8px; }
+  .lay { display: flex; align-items: center; gap: 12px; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 8px 12px; }
+  .name { width: 150px; color: #e8c45a; font-size: 13px; }
+  .when { width: 200px; color: #8ea0b5; font-size: 12px; }
+  .ch { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ch span { background: #0b1020; border: 1px solid #3a4858; border-radius: 4px; padding: 3px 7px; font-size: 12px; color: #d7e0ea; }
+  .note { margin-top: 14px; font-size: 12px; line-height: 1.45; color: #c5d0dc; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .note strong { color: #9be7ff; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>GRAVITY CHANNELS</h1>
+  <p class="sub">postProcessGravityChannels. Checked gravity on a finished recording, and on a finished download that is not a GIF. Discrete packets for Noise transport. mix.wav is the hear-back.</p>
+  <div class="flow">
+    <div class="node"><h2>FILE</h2><p>First audio stream. ffprobe channels. No audio: stop, status “gravity: no audio to split”.</p></div>
+    <div class="arr">→</div>
+    <div class="node"><h2>NORM</h2><p>If the box is peak or loudness, one programme filter. off leaves this stage empty.</p></div>
+    <div class="arr">→</div>
+    <div class="node"><h2>PAN</h2><p>Identity pan to the layout name. c0=c0 … so channels are labeled, not remixed.</p></div>
+    <div class="arr">→</div>
+    <div class="node"><h2>SPLIT</h2><p>channelsplit writes one pcm_s24le 48 kHz WAV per label, at most 8.</p></div>
+    <div class="arr">→</div>
+    <div class="node"><h2>MIX</h2><p>amerge of those WAVs, aformat to the same layout, mix.wav beside them.</p></div>
+  </div>
+  <h3>LAYOUT FROM CHANNEL COUNT</h3>
+  <div class="layouts">
+    <div class="lay"><div class="name">stereo</div><div class="when">1–2 ch</div><div class="ch"><span>FL</span><span>FR</span></div></div>
+    <div class="lay"><div class="name">quad</div><div class="when">3–4 ch</div><div class="ch"><span>FL</span><span>FR</span><span>BL</span><span>BR</span></div></div>
+    <div class="lay"><div class="name">5.0</div><div class="when">5 ch</div><div class="ch"><span>FL</span><span>FR</span><span>FC</span><span>BL</span><span>BR</span></div></div>
+    <div class="lay"><div class="name">5.1</div><div class="when">6 ch</div><div class="ch"><span>FL</span><span>FR</span><span>FC</span><span>LFE</span><span>BL</span><span>BR</span></div></div>
+    <div class="lay"><div class="name">6.1</div><div class="when">7 ch</div><div class="ch"><span>FL</span><span>FR</span><span>FC</span><span>LFE</span><span>BC</span><span>SL</span><span>SR</span></div></div>
+    <div class="lay"><div class="name">7.1</div><div class="when">8 or more, capped at 8</div><div class="ch"><span>FL</span><span>FR</span><span>FC</span><span>LFE</span><span>BL</span><span>BR</span><span>SL</span><span>SR</span></div></div>
+  </div>
+  <div class="note"><strong>On disk.</strong> Directory <code>&lt;media&gt;.gravity/</code> holds the labeled WAVs and mix.wav. <code>&lt;media&gt;.gravity.json</code> records layout, channel count, directory, mix path, and the split list. ffmpeg AAC has no 8.1, so eight channels are stored as 7.1.</div>
+</div>
+</body>
+</html>

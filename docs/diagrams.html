@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gravity Serve · diagrams</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 28px 24px 64px; }
+  a { color: #9be7ff; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; font-weight: 700; }
+  .sub { color: #8ea0b5; font-size: 13px; line-height: 1.5; margin: 8px 0 0; }
+  nav { margin-top: 14px; font-size: 13px; }
+  nav a { margin-right: 14px; }
+  h2 { margin: 28px 0 8px; font-size: 13px; letter-spacing: 0.14em; color: #5ae0d0; font-weight: 600; }
+  figure { margin: 0 0 22px; }
+  figcaption { font-size: 13px; line-height: 1.45; margin: 0 0 8px; }
+  figcaption strong { color: #e8c45a; font-weight: 600; }
+  img { width: 100%; height: auto; display: block; border: 1px solid rgba(155,231,255,0.28); border-radius: 8px; background: #0b1020; }
+  .links { margin-top: 6px; font-size: 12px; color: #8ea0b5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DIAGRAMS</h1>
+  <p class="sub">The drawings from docs/gravity and docs/audio. Picture and sound are processed into a file. The tesseract is the address of that file. Norm is one programme gain: peak −1 dBFS, or loudness −23 LUFS.</p>
+  <nav>
+    <a href="/">← Gravity Serve</a>
+    <a href="#gravity">Gravity</a>
+    <a href="#audio">Audio</a>
+    <a href="/docs/gravity/README.md">gravity notes</a>
+    <a href="/docs/audio/README.md">audio notes</a>
+  </nav>
+
+  <h2 id="gravity">GRAVITY</h2>
+
+  <figure>
+    <figcaption><strong>Chain.</strong> Signal, probe, the 16-vertex address, then the catalog.</figcaption>
+    <img src="/docs/gravity/chain.png" alt="Gravity chain: signal, probe, tesseract, catalog">
+    <div class="links"><a href="/docs/gravity/README.md">notes</a> · <a href="/docs/gravity/html/chain.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Signal.</strong> Picture and sound meet in one file. Four probe numbers are stored on the cell.</figcaption>
+    <img src="/docs/gravity/signal.png" alt="Audiovisual signal into the four-number audio vector">
+    <div class="links"><a href="/docs/gravity/signal.md">notes</a> · <a href="/docs/gravity/html/signal.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Tesseract.</strong> Sixteen vertices. The hash picks the cell. The audio vector is the measurement on that cell.</figcaption>
+    <img src="/docs/gravity/tesseract.png" alt="Sixteen tesseract vertices and the Gray walk">
+    <div class="links"><a href="/docs/gravity/tesseract.md">notes</a> · <a href="/docs/gravity/html/tesseract.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Position.</strong> AVD is the file. POS is the vertex. Proof of spatio hashes the pair.</figcaption>
+    <img src="/docs/gravity/position.png" alt="AVD paired with POS by sha256">
+    <div class="links"><a href="/docs/gravity/position.md">notes</a> · <a href="/docs/gravity/html/position.html">html</a></div>
+  </figure>
+
+  <h2 id="audio">AUDIO</h2>
+
+  <figure>
+    <figcaption><strong>Overview.</strong> Arm a function, encode, then norm, then the gravity channel split.</figcaption>
+    <img src="/docs/audio/overview.png" alt="Recorder, encode, normalisation, gravity split">
+    <div class="links"><a href="/docs/audio/README.md">notes</a> · <a href="/docs/audio/html/overview.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Recorder.</strong> WYHIWYREC, net stream, and catalog. STOP closes the take.</figcaption>
+    <img src="/docs/audio/recorder.png" alt="Three record functions and the shared encode">
+    <div class="links"><a href="/docs/audio/recorder.md">notes</a> · <a href="/docs/audio/html/recorder.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Normalisation.</strong> Peak to −1 dBFS. Loudness to −23 LUFS, true peak −1.5 dBTP. One gain for the programme.</figcaption>
+    <img src="/docs/audio/normalization.png" alt="Peak and loudness measure, then where the gain is applied">
+    <div class="links"><a href="/docs/audio/normalization.md">notes</a> · <a href="/docs/audio/html/normalization.html">html</a></div>
+  </figure>
+  <figure>
+    <figcaption><strong>Gravity channels.</strong> One programme gain, an identity pan, then the split and mix.wav.</figcaption>
+    <img src="/docs/audio/gravity-channels.png" alt="Channel layouts from stereo through 7.1">
+    <div class="links"><a href="/docs/audio/gravity-channels.md">notes</a> · <a href="/docs/audio/html/gravity-channels.html">html</a></div>
+  </figure>
+</div>
+</body>
+</html>

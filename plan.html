@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Approved Plan — Gravity stack architecture</title>
+  <style>
+    :root {
+      --bg: #09090f;
+      --panel: #161a2a;
+      --panel-deep: #0b1020;
+      --accent: #9be7ff;
+      --text: #e6f6ff;
+      --muted: #98b7c7;
+      --ok: #5ae0d0;
+      --purple: #b05ad0;
+      --warn: #c8d05a;
+      --gif: #e05ac0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 24px 48px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    h2 { font-size: 1.1rem; color: var(--accent); margin: 28px 0 10px; border-bottom: 1px solid rgba(155,231,255,0.2); padding-bottom: 6px; }
+    h3 { font-size: 0.95rem; color: var(--ok); margin: 18px 0 8px; }
+    .sub, p.sub { color: var(--muted); font-size: 0.85rem; }
+    blockquote {
+      margin: 12px 0;
+      padding: 10px 14px;
+      border-left: 3px solid var(--purple);
+      background: var(--panel);
+      border-radius: 0 8px 8px 0;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(155,231,255,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 10px 0; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(155,231,255,0.12); vertical-align: top; }
+    th { color: var(--accent); }
+    pre {
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.15);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: 0.78rem;
+    }
+    code { color: var(--ok); }
+    ul { padding-left: 1.2rem; }
+    li { margin: 4px 0; }
+    .chart {
+      background: var(--panel-deep);
+      border: 1px solid rgba(155,231,255,0.2);
+      border-radius: 10px;
+      padding: 16px;
+      margin: 16px 0;
+      overflow-x: auto;
+    }
+    .chart .mermaid { display: flex; justify-content: center; }
+    .nav { margin-bottom: 16px; }
+    .nav a { color: var(--accent); margin-right: 14px; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(90,224,208,0.2);
+      color: var(--ok);
+      margin-left: 8px;
+    }
+    .badge.wip { background: rgba(200,208,90,0.2); color: var(--warn); }
+    .badge.gif { background: rgba(224,90,192,0.25); color: var(--gif); }
+    .todo { list-style: none; padding: 0; }
+    .todo li { padding: 6px 0; border-bottom: 1px solid rgba(155,231,255,0.08); }
+    .todo li::before { content: "☐ "; color: var(--muted); }
+    .todo li.done::before { content: "☑ "; color: var(--ok); }
+    .toc a { color: var(--accent); text-decoration: none; }
+    .toc li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="nav">
+      <a href="/">← Gravity Serve</a>
+      <a href="/plan.md">plan.md</a>
+      <a href="/plan.original.md">plan.original.md</a>
+      <a href="/#downloads">Recent Downloads</a>
+      <a href="/#recs">WYHIWYREC</a>
+    </div>
+
+    <blockquote>
+      Living approved plan for the <strong>entire Gravity architecture</strong>: desktop, serve, protocol, H.264 + GIF downloads, VPN/overlays, WYHIWYREC recording, AVD/POS cron, mint. Original July 2026 AVD/POS-only design kept as <code>plan.original.md</code>.
+    </blockquote>
+
+    <h1>Approved Plan — Gravity stack <span class="badge">LIVING</span></h1>
+    <p class="sub">Upgraded 2026-09-02 · http://127.0.0.1:8766/plan · all communication is community</p>
+
+    <div class="panel">
+      <table>
+        <thead><tr><th>Phase</th><th>Scope</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>Whole-stack architecture (protocol, clients, mint, community)</td><td><span class="badge">SHIPPED</span></td></tr>
+          <tr><td>1–3</td><td>AVD/POS cron, position_index, Scheduled + Positioning tabs</td><td><span class="badge">SHIPPED</span></td></tr>
+          <tr><td>4</td><td>Character Designer — Form is Feed from Source(1)(2)(3)(4)+(N)</td><td><span class="badge wip">IN PROGRESS</span></td></tr>
+          <tr><td>5</td><td>GIF Direct — Java GIF + Serve POST /api/download {gif:true}</td><td><span class="badge gif">SHIPPED 2026-09-02</span></td></tr>
+          <tr><td>6</td><td>VPN / overlay (HKG/direct, SSH SOCKS, Tor, I2P, Surfshark opt-in)</td><td><span class="badge">SHIPPED</span></td></tr>
+          <tr><td>7</td><td>Recording — WYHIWYREC / net stream / catalog → asc-rec-* + Recs tab</td><td><span class="badge">SHIPPED</span></td></tr>
+          <tr><td>8</td><td>Gravity Switcher — separate applet · ON/OFF lock · NNLR · Security</td><td><span class="badge">SHIPPED</span></td></tr>
+          <tr><td>9</td><td>Vacuum / TLS-JA3 / generic-site downloads · detail log (Desktop + Serve)</td><td><span class="badge">SHIPPED</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="deps">Structural dependencies (crossover)</h2>
+    <p>One env file, one venv, two Java applets, Serve via symlink. <code>javac</code> the Swing sources in their run dirs; Serve reads <code>nls-video-monitor</code> through GravityDesktop symlinks.</p>
+    <table>
+      <thead><tr><th>Surface</th><th>Build / path</th><th>Depends on</th></tr></thead>
+      <tbody>
+        <tr><td>GravityDesktop</td><td><code>~/Downloads/GravityDesktop/</code> <code>javac GravityDesktop.java</code> (legacy Swing, OpenJDK 21)</td><td><code>yt-dlp-run</code> → <code>.venv</code> <code>curl_cffi</code> Chrome JA3; ffmpeg vacuum; <code>~/.config/gravity-desktop/env</code>; Switcher lock/pid</td></tr>
+        <tr><td>Gravity Switcher</td><td><code>~/Downloads/GravitySwitcher/run.sh</code> — <strong>separate app</strong></td><td>Writes env + <code>switcher.pid</code>. OFF / close → HKG/direct. Desktop header <strong>SWITCHER</strong></td></tr>
+        <tr><td>Gravity Serve</td><td><code>nls_video_pipe.py</code> + <code>gravity_serve.html</code> (symlinked from run dir)</td><td>Same yt-dlp-run PATH; <code>POST /api/download {gif,vacuum,tls_ja3,detail}</code>; <code>GET /api/vacuum/log</code></td></tr>
+        <tr><td>gravity-server</td><td>TCP <code>:4242</code></td><td>Handshake only — not yt-dlp</td></tr>
+        <tr><td>Downloads</td><td><code>~/Downloads/direct-h264-*</code> · <code>direct-gif-*</code> · <code>asc-rec-*</code></td><td>YouTube = avc H.264; <strong>all other sites</strong> = <code>-f best</code> + scrape; vacuum opt-in</td></tr>
+        <tr><td>TLS/JA3</td><td><code>--impersonate chrome</code></td><td>Not VP56. Opt-out checkbox Desktop + Serve. Env <code>GRAVITY_IMPERSONATE</code></td></tr>
+        <tr><td>Vacuum</td><td>ffmpeg <code>-map_metadata -1</code> + trailer truncate</td><td>Opt-in. Detail + log on both UIs. Jsonl: Desktop runtime-logs + <code>~/.local/share/nls-video/vacuum-log.jsonl</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2>Contents</h2>
+    <ul class="toc">
+      <li><a href="#arch">0. Entire architecture</a></li>
+      <li><a href="#gif">5. GIF Direct</a></li>
+      <li><a href="#vpn">6. VPN / overlay</a></li>
+      <li><a href="#rec">7. Recording (WYHIWYREC)</a></li>
+      <li><a href="#deps">Structural dependencies</a></li>
+      <li><a href="#switch">8. Gravity Switcher (WAN/LAN agent)</a></li>
+      <li><a href="#vac">9. Vacuum / TLS-JA3 / generic sites</a></li>
+      <li><a href="#avd">1–3. AVD/POS cron</a></li>
+      <li><a href="#char">4. Character Designer</a></li>
+      <li><a href="#todos">Todos</a></li>
+    </ul>
+
+    <h2 id="arch">0. Entire architecture</h2>
+    <p>Two clients, one protocol. Vertical mint stack + horizontal convert worker. Cron keeps AVD↔POS paired. Downloads, recs, and GIFs land in <code>~/Downloads/</code> and show on Serve.</p>
+
+    <h3>Community surfaces</h3>
+    <div class="chart">
+      <pre class="mermaid">
+flowchart LR
+    subgraph community [Community]
+        People[Operators]
+        Peers[Peer machines]
+        Forms[AVD POS GIF rec character]
+    end
+    subgraph gravity [GravityDesktop programming]
+        GD[GravityDesktop.java]
+        GS[gravity-server :4242]
+        HTML[gravity-serve :8766]
+        IL[interlaterus mint]
+        YT[yt-dlp / ffmpeg]
+    end
+    People --> GD
+    People --> HTML
+    GD --> GS
+    HTML --> GS
+    GD --> YT
+    HTML --> YT
+    GD --> IL
+    IL --> Peers
+    GS --> Forms
+    IL --> Forms
+    YT --> Forms
+      </pre>
+    </div>
+
+    <h3>Process tree (user space)</h3>
+    <pre><code>$USER
+├── python3 nls_video_pipe.py gravity-server --port 4242
+├── python3 nls_video_pipe.py gravity-serve  --port 8766
+│     └── cron-runner thread (GRAVITY_CRON_ENABLED=1)
+├── java GravityDesktop
+├── python3 interlaterus_desktop.py watch|character|export
+└── optional: nls-video worker · audio-ml-toolkit</code></pre>
+
+    <table>
+      <thead><tr><th>Port</th><th>Process</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>127.0.0.1:4242</code></td><td>gravity-server</td><td>Live jobs + catalog pulse (GRAVITY handshake)</td></tr>
+        <tr><td><code>127.0.0.1:8766</code></td><td>gravity-serve</td><td>HTML + REST + this plan</td></tr>
+        <tr><td><code>127.0.0.1:1080</code></td><td>SSH SOCKS (optional)</td><td>Preferred overlay for YouTube vs Surfshark</td></tr>
+        <tr><td><code>:9050</code> / <code>:4444</code></td><td>Tor / I2P (optional)</td><td>Onion / eepsites — not YouTube</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Gravity protocol</h3>
+    <table>
+      <thead><tr><th>Step</th><th>Direction</th><th>Payload</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Server → Client</td><td><code>GRAVITY\x00\x01</code></td></tr>
+        <tr><td>2</td><td>Client → Server</td><td>32 × <code>0x42</code></td></tr>
+        <tr><td>3</td><td>Server → Client</td><td>32 × <code>0x00</code></td></tr>
+        <tr><td>4</td><td>Client → Server</td><td>48 × <code>0x43</code></td></tr>
+        <tr><td>5</td><td>Server → Client</td><td>JSON lines <code>gravity_update</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Vertical mint + horizontal worker</h3>
+    <div class="chart">
+      <pre class="mermaid">
+flowchart TB
+    subgraph acq [Acquisition]
+        URL[URL / rec / GIF]
+        URL --> GD[GravityDesktop / Serve]
+        GD --> H264["~/Downloads/direct-h264-*.mp4"]
+        GD --> GIF["~/Downloads/direct-gif-*.gif"]
+        GD --> REC["~/Downloads/asc-rec-*"]
+    end
+    subgraph mint [Mint]
+        H264 --> Probe[ffprobe + sha256]
+        GIF --> Probe
+        Probe --> BC[blockcode + vertex_from_digest]
+        BC --> Cat[(blockcode_registry + sidecar)]
+    end
+    subgraph worker [Pipeline worker]
+        Add[nls-video add] --> Q[(jobs.db)]
+        Q --> W[worker]
+        W --> Out["~/Videos/NLS-Visualist/*.mp4"]
+    end
+    Cat --> POS[position_index.json]
+    Out --> POS
+      </pre>
+    </div>
+
+    <h3>Run</h3>
+    <pre><code>nls-video gravity-server --port 4242
+~/Downloads/GravityDesktop/run-gravity-serve.sh    # http://127.0.0.1:8766/
+~/Downloads/GravityDesktop/run.sh                  # Java UI
+# optional: run-ssh-socks.sh · run-gravity-ngrok.sh</code></pre>
+
+    <h2 id="gif">5. GIF Direct <span class="badge gif">SHIPPED</span></h2>
+    <blockquote>Same trigger in GravityDesktop and Gravity Serve. Native GIFs over HTTP. X <code>tweet_video</code> recode. Giphy / Tenor / Imgur resolvers. yt-dlp recode only as fallback. Never <code>--merge-output-format gif</code>.</blockquote>
+
+    <table>
+      <thead><tr><th>Surface</th><th>Control</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>GravityDesktop</td><td><strong>GIF</strong> (magenta, under H.264). Enter auto-GIFs .gif / Giphy / Tenor / X tweet_video</td><td><code>~/Downloads/direct-gif-{id}.gif</code></td></tr>
+        <tr><td>Gravity Serve</td><td><strong>GIF Direct</strong></td><td><code>POST /api/download {gif:true, mint:true}</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="chart">
+      <pre class="mermaid">
+flowchart LR
+    URL[URL] --> Resolve[host resolve]
+    Resolve -->|X status| Fx[fxtwitter tweet_video]
+    Resolve -->|Giphy| Giphy["i.giphy.com/id.gif"]
+    Resolve -->|Imgur gifv| Imgur[i.imgur.com]
+    Resolve -->|Tenor / HTML| Scrape[scrape .gif]
+    Fx --> HTTP[HTTP + GIF8 magic]
+    Giphy --> HTTP
+    Imgur --> HTTP
+    Scrape --> HTTP
+    HTTP -->|native gif| Out["direct-gif-id.gif"]
+    HTTP -->|mp4 / webm| Recode[ffmpeg recode]
+    Recode --> Out
+    HTTP -->|fail| YT["yt-dlp --recode-video gif"]
+    YT --> Out
+    Out --> Mint[interlaterus mint]
+    Out --> API["GET /api/downloads kind=gif"]
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Host</th><th>Media</th></tr></thead>
+      <tbody>
+        <tr><td>X / Twitter <code>…/status/{id}</code></td><td><code>video.twimg.com/tweet_video/*.mp4</code> → recode GIF</td></tr>
+        <tr><td>Giphy</td><td><code>https://i.giphy.com/{id}.gif</code> native</td></tr>
+        <tr><td>Tenor</td><td>HTML scrape → native .gif</td></tr>
+        <tr><td>Imgur .gif / .gifv</td><td>.gif then .mp4 recode</td></tr>
+        <tr><td>Direct .gif URL</td><td>HTTP copy (magic GIF8)</td></tr>
+        <tr><td>Other video</td><td>yt-dlp <code>--recode-video gif</code></td></tr>
+      </tbody>
+    </table>
+    <p>Catalog: <code>host</code> x/giphy/tenor/imgur, X status <code>source_url</code>, tweet titles via fxtwitter. Play uses <code>&lt;img&gt;</code>. Served <code>image/gif</code>.</p>
+
+    <h2 id="vpn">6. VPN / overlay path <span class="badge">SHIPPED</span></h2>
+    <blockquote>Kernel VPN is <strong>opt-in</strong>. <strong>Do not stack</strong> Surfshark + Astrill. Surfshark Cyberzone 403s YouTube. Astrill Stealth = <code>tun0</code> 198.18.x (China hotel DPI). Archive <code>~/Downloads/NLS-Astrill</code>. Prefer HKG/direct or SSH VPS for YouTube.</blockquote>
+
+    <div class="chart">
+      <pre class="mermaid">
+flowchart LR
+    App[GravityDesktop yt-dlp]
+    App --> Overlay{overlay}
+    Overlay -->|HKG/direct default| ISP[HKT ISP]
+    Overlay -->|SSH VPS| Socks["socks5://127.0.0.1:1080"]
+    Overlay -->|Tor onion| Tor[SOCKS :9050]
+    Overlay -->|I2P garlic| I2P[":4444 / :4447"]
+    App --> VPN{VPN checkbox + provider}
+    VPN -->|off| Overlay
+    VPN -->|Astrill| Tun["tun0 198.18.x --source-address"]
+    VPN -->|Surfshark| WG[surfshark_wg --source-address]
+    ISP --> Host[YouTube / X / Giphy]
+    Socks --> Host
+    Tun --> Host
+    WG -->|often 403 Cyberzone| Host
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Control</th><th>Path</th><th>Use</th></tr></thead>
+      <tbody>
+        <tr><td>Overlay <strong>HKG/direct</strong>, VPN off</td><td>HKT ISP</td><td>Default. YouTube / GIF.</td></tr>
+        <tr><td>Overlay <strong>SSH VPS</strong> + <code>run-ssh-socks.sh</code></td><td><code>socks5://127.0.0.1:1080</code></td><td>Preferred vs Surfshark for 403/geo</td></tr>
+        <tr><td>Overlay <strong>Tor onion</strong></td><td>SOCKS :9050</td><td>Onion. YouTube often 403 on Tor exits.</td></tr>
+        <tr><td>Overlay <strong>I2P garlic</strong></td><td>:4444 / :4447</td><td>Eepsites only — no YouTube outproxy</td></tr>
+        <tr><td><strong>VPN</strong> + provider <strong>Astrill</strong></td><td><code>tun0</code> <code>198.18.x</code> via <code>/usr/local/Astrill/astrill</code> (<code>~/.config/astrill</code>)</td><td>China hotel DPI / StealthVPN. Check VPN, pick Astrill, StealthVPN ON. Do not stack Surfshark.</td></tr>
+        <tr><td><strong>VPN</strong> + provider <strong>Surfshark</strong></td><td><code>surfshark_wg</code> <code>--force-ipv4 --source-address</code></td><td>CMHK backup. Datacenter 403 on YouTube. Brave cookies + <code>tv,web</code>. Never android client.</td></tr>
+      </tbody>
+    </table>
+    <p>Java: <code>vpnCheck</code>, <code>vpnProviderBox</code> (auto / Astrill / Surfshark), <strong>Astrill</strong> launch button, <code>overlayBox</code>. <code>net:</code> shows <code>Astrill tun0 198.18.x (stealth)</code> or <code>Surfshark … (datacenter)</code>. Env: <code>GRAVITY_USE_VPN=1</code>, <code>GRAVITY_VPN_PROVIDER=astrill|surfshark|auto</code>. Leave VPN unchecked unless downloads must ride the tunnel.</p>
+
+    <h2 id="rec">7. Recording system <span class="badge">SHIPPED</span></h2>
+    <blockquote><strong>Form follows function.</strong> Arm a mode (filled = armed). Click armed again or <strong>REC</strong> to start. <strong>opt:</strong> shows only that mode’s modifiers. STOP / SAVE stay global.</blockquote>
+
+    <div class="chart">
+      <pre class="mermaid">
+flowchart TB
+    Arm[arm WYHIWYREC / net stream / catalog]
+    Arm --> Opt["opt: follows armed fn"]
+    Opt --> Rec[REC or click armed again]
+    Rec --> Cap[ffmpeg / yt-dlp capture]
+    Cap --> File["~/Downloads/asc-rec-*"]
+    File --> Side[".rec.json + REC-SAVED.json"]
+    File --> Serve["GET /api/recs · WYHIWYREC tab"]
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Armed</th><th>Function</th><th>opt:</th></tr></thead>
+      <tbody>
+        <tr><td><strong>WYHIWYREC</strong></td><td>TASCAM / PipeWire monitor — what you hear</td><td>format, NTS 1/2, hear, auto, sig</td></tr>
+        <tr><td><strong>net stream</strong></td><td>Icecast / URL dump of the bar</td><td>format, NTS 1/2, copy</td></tr>
+        <tr><td><strong>catalog</strong></td><td>selected ASC row</td><td>format, copy</td></tr>
+      </tbody>
+    </table>
+    <p><strong>out:</strong> Speaker / TASCAM / HDMI / gravity-out / PipeWireVirtual (<code>pw</code> → <code>pw-loopback -n gravity-pw</code>). SIGNAL meter only for WYHIWYREC. Formats: WAV 48k/24 default, FLAC, AAC, MP3; ffmpeg stillimage MP4 wraps.</p>
+    <p>Serve: <a href="/#recs">WYHIWYREC tab</a> · <code>GET /api/recs</code> · <code>GET /api/downloads</code> → <code>{items, recs, counts}</code>. Play + Locate.</p>
+
+    <h2 id="switch">8. Gravity Switcher <span class="badge">SHIPPED</span></h2>
+    <blockquote>
+      Build it <strong>as this stack</strong>, not a new product. Path agent for <code>tor | internet | vpn | i2p</code> on WAN and LAN. Logs package switches. ML (Grok / NCOMM M2L) reads the log when you ask about NLS online systems.
+      Notebooks: NLS observer circle · Automation.13 CPU · RAND multi-layer.
+      Plate: <a href="https://clover-juniper-iris-bird.grok.me/">clover-juniper-iris-bird.grok.me</a>
+    </blockquote>
+
+    <h3>Repo references — security · transport · mobility</h3>
+    <table>
+      <thead><tr><th>Repo</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://github.com/nonlineari/NCOMM">nonlineari/NCOMM</a></td><td>Transport + mobility: USB-C / WiFi / dual WAN·LAN, <code>diagnose-network.sh</code>, Tesseract 16-vertex, LEN security, M2L ML</td></tr>
+        <tr><td><a href="https://github.com/nonlineari/security-monitoring">nonlineari/security-monitoring</a></td><td>Packet calibration + JIT ML encoder (private)</td></tr>
+        <tr><td><a href="https://github.com/nonlineari/cim">nonlineari/cim</a> <code>09_scis/</code></td><td>SCIS Noise secure transport</td></tr>
+        <tr><td><code>~/Videos/nls-portal-os/nlsmobility</code></td><td>Mobility layer: Momentum · nonlineari · simcolliges</td></tr>
+        <tr><td>GravityDesktop overlay + download (shipped)</td><td>HKG/direct, SSH VPS, system Tor <code>:9050</code> (not Brave), I2P, VPN Astrill <code>tun0</code> / Surfshark. YouTube = avc H.264; <strong>every other site</strong> = <code>-f best</code> then HTTP scrape (not YouTube format — that was HTTP rc=1)</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Notebook → stack</h3>
+    <table>
+      <thead><tr><th>Sketch</th><th>Switcher</th></tr></thead>
+      <tbody>
+        <tr><td>NLS circle (N/S, eye, orbit)</td><td>Operator / presentation: GravityDesktop + Serve + clover-juniper plate</td></tr>
+        <tr><td>Automation.13 CPU · D / G1</td><td>Switcher agent: pick one path, never stack Astrill+Surfshark</td></tr>
+        <tr><td>Deconstruction: NFS, CC, mobile, OS i/o</td><td>Path classes: crypto overlay, catalog, WAN, LAN</td></tr>
+        <tr><td>Decentralization: traceroute, mail, firewall WiFi, PGP</td><td><code>ip monitor</code> + NCOMM diagnose + LEN audit log</td></tr>
+        <tr><td>RAND presentation / application / data / security</td><td>Serve UI · switch API · <code>switch-log.jsonl</code> · LEN/NCOMM</td></tr>
+      </tbody>
+    </table>
+
+    <div class="chart">
+      <pre class="mermaid">
+flowchart TB
+    subgraph present [Presentation]
+        NLS[NLS observer]
+        UI[GravityDesktop overlay]
+        Serve[gravity-serve Switcher tab]
+        Plate[clover-juniper grok.me]
+    end
+    subgraph cpu [Automation.13 agent]
+        Ag[switcher: one path]
+        Ag --> Inet[internet HKG/direct]
+        Ag --> Vpn[vpn Astrill OR Surfshark]
+        Ag --> Tor[tor SOCKS :9050]
+        Ag --> I2P[i2p :4444/:4447]
+    end
+    subgraph data [Data]
+        Log["switch-log.jsonl"]
+        Mon["ip monitor link,addr,route"]
+    end
+    subgraph sec [Security]
+        NCOMM[NCOMM topologies WAN/LAN]
+        LEN[LEN audit]
+        SCIS[SCIS Noise]
+    end
+    NLS --> UI
+    UI --> Ag
+    Serve --> Ag
+    Ag --> Log
+    Mon --> Log
+    Log --> LEN
+    NCOMM --> Ag
+    Plate --> Serve
+      </pre>
+    </div>
+
+    <table>
+      <thead><tr><th>Mode</th><th>Interface</th><th>When</th></tr></thead>
+      <tbody>
+        <tr><td><strong>internet</strong></td><td>LAN <code>enp*</code> / WAN DHCP</td><td>Default YouTube / GIF</td></tr>
+        <tr><td><strong>vpn</strong></td><td>Astrill <code>tun0</code> <strong>or</strong> Surfshark WG — never both</td><td>China hotel DPI vs CMHK backup</td></tr>
+        <tr><td><strong>tor</strong></td><td>System <code>tor</code> already on <code>127.0.0.1:9050</code> — not Brave onion</td><td>.onion / OSINT</td></tr>
+        <tr><td><strong>i2p</strong></td><td><code>:4444</code> / <code>:4447</code></td><td>Eepsites only</td></tr>
+      </tbody>
+    </table>
+    <p>WAN vs LAN from NCOMM: USB-C bridge, WiFi same subnet, dual, internet sharing. LAN is the default route interface. Optional <code>tun0</code> is the WAN overlay.</p>
+    <p><strong>ON/OFF:</strong> applet starts OFF. Titlebar ON writes <code>GRAVITY_SWITCHER_LOCK=1</code> + pid. OFF or close restores HKG/direct + VPN unchecked. Desktop follows lock every 2.5s; dead pid auto-unlocks.</p>
+    <p>Launch: <code>~/Downloads/GravitySwitcher/run.sh</code> or Desktop cyan <strong>SWITCHER</strong>. Ledger: <code>~/.local/share/nls-video/switch-log.jsonl</code>.</p>
+
+    <h2 id="vac">9. Vacuum / TLS-JA3 / generic-site downloads <span class="badge">SHIPPED</span></h2>
+    <blockquote>Same controls on GravityDesktop and Gravity Serve. Vacuum is <strong>opt-in</strong>. TLS/JA3 is <strong>opt-out</strong> (Chrome impersonate via <code>curl_cffi</code>). Generic HTTP must not use YouTube’s avc format (that was HTTP rc=1).</blockquote>
+    <table>
+      <thead><tr><th>Control</th><th>Desktop</th><th>Serve</th></tr></thead>
+      <tbody>
+        <tr><td>vacuum</td><td>checkbox · <code>GRAVITY_VACUUM</code></td><td><code>POST /api/download {vacuum}</code></td></tr>
+        <tr><td>detail + log</td><td>pane + dialog · runtime jsonl</td><td><code>detail</code> + <code>GET /api/vacuum/log</code></td></tr>
+        <tr><td>TLS/JA3</td><td>checkbox · <code>yt-dlp-run --impersonate chrome</code></td><td><code>{tls_ja3}</code> + same venv on PATH</td></tr>
+        <tr><td>non-YouTube</td><td><code>-f best</code> then HTTP scrape</td><td>same yt-dlp path in <code>api_direct_download</code></td></tr>
+      </tbody>
+    </table>
+    <p>Pornhub “no impersonate target” is <strong>not</strong> VP56. VP56 remains <code>libvpx</code> dual webm. JA3 = <code>curl_cffi</code> in <code>GravityDesktop/.venv</code>.</p>
+
+    <h2 id="avd">1–3. AVD/POS catalog positioning <span class="badge">SHIPPED</span></h2>
+    <p><strong>AVD</strong> = filmic side (<code>direct-h264-*</code>, <code>direct-gif-*</code>, probe). <strong>POS</strong> = tesseract vertex + storage_memory_category. Not Android emulators or retail POS.</p>
+
+    <div class="chart">
+      <pre class="mermaid">
+flowchart TB
+    subgraph scheduler [Scheduler]
+        CronTab[crontab optional]
+        CronRunner[in-process cron-runner]
+        CronTab --> CronRunner
+    end
+    subgraph tasks [Tasks]
+        MintWatch[mint_watch]
+        PosReconcile[pos_reconcile]
+        AvdScan[avd_scan]
+    end
+    CronRunner --> MintWatch
+    CronRunner --> PosReconcile
+    CronRunner --> AvdScan
+    MintWatch --> BlockDB[(blockcode_registry.db)]
+    PosReconcile --> PosIndex[position_index.json]
+    AvdScan --> PosIndex
+    GravityServe[gravity-serve :8766] --> APIs["/api/cron /api/positioning"]
+    PosIndex --> APIs
+    APIs --> HTML[Scheduled + Positioning tabs]
+      </pre>
+    </div>
+
+    <ul>
+      <li><strong>mint_watch</strong> — every 10 min: mint new <code>direct-h264-*</code> and <code>direct-gif-*</code></li>
+      <li><strong>pos_reconcile</strong> — every 30 min: merge vertex + zone into <code>position_index.json</code></li>
+      <li><strong>avd_scan</strong> — every 15 min: tag analog files FILMIC</li>
+    </ul>
+    <p>Conflict: <strong>blockcode DB wins vertex</strong>; <strong>visualist catalog wins zone</strong>; AVD path from newest mtime. Vertex = <code>vertex_from_digest(sha256)</code> (never first-free modulo onto <code>[0,0,0,0]</code>).</p>
+    <p><code>GRAVITY_CRON_ENABLED=1</code> in <code>run-gravity-serve.sh</code>. CLI: <code>nls-video cron tick</code> / <code>cron run --id N</code>.</p>
+
+    <h2 id="char">4. Character Designer <span class="badge wip">IN PROGRESS</span></h2>
+    <p>Form is Feed from Source(1)(2)(3)(4) and (N) Viral RNA. Dual axes: <code>hand_drawn</code> | <code>video_capture</code> × <code>2d_graphics</code> | <code>3d_form</code>. Register via <code>interlaterus_desktop.py character register</code>. Remaining: POS/ASC profile weights, Fibonacci fold on heatmap, viral dose limits, audio-ml bridge.</p>
+
+    <h2 id="todos">Todos</h2>
+    <ul class="todo">
+      <li class="done"><strong>cron-schema</strong> — cron_tasks + cron_runs + seed mint_watch / pos_reconcile / avd_scan</li>
+      <li class="done"><strong>position-index</strong> — position_index.json merge visualist + interlaterus + blockcode</li>
+      <li class="done"><strong>task-runners</strong> — run_watch_once + avd_scan + cron tick</li>
+      <li class="done"><strong>api-endpoints</strong> — /api/cron, /api/cron/run, /api/positioning</li>
+      <li class="done"><strong>html-tabs</strong> — Scheduled + Positioning + Recs + Downloads</li>
+      <li class="done"><strong>ops-wiring</strong> — GRAVITY_CRON_ENABLED in run-gravity-serve.sh</li>
+      <li class="done"><strong>vertex-form-from-source</strong> — vertex_from_digest; rebalance-vertices</li>
+      <li class="done"><strong>gif-trigger-java</strong> — GIF button; X tweet_video via fxtwitter</li>
+      <li class="done"><strong>gif-all-hosts</strong> — native HTTP GIF; Giphy / Tenor / Imgur</li>
+      <li class="done"><strong>gif-serve-api</strong> — POST /api/download {gif:true}</li>
+      <li class="done"><strong>gif-catalog</strong> — host + X titles + img play</li>
+      <li class="done"><strong>vpn-opt-in</strong> — HKG default off; SSH / Tor / I2P overlays</li>
+      <li class="done"><strong>rec-arm</strong> — WYHIWYREC / net stream / catalog; /api/recs</li>
+      <li class="done"><strong>gravity-switcher</strong> — Separate applet ON/OFF; env lock; NNLR; Security tab; Desktop SWITCHER</li>
+      <li class="done"><strong>generic-http</strong> — non-YouTube <code>-f best</code> + scrape (no avc format rc=1)</li>
+      <li class="done"><strong>tls-ja3</strong> — curl_cffi Chrome impersonate; opt-out TLS/JA3 on Desktop + Serve</li>
+      <li class="done"><strong>vacuum</strong> — opt-in file strip; detail + log on Desktop + Serve <code>/api/vacuum/log</code></li>
+      <li><strong>character-designer</strong> — Source weights on POS/ASC UI, Fibonacci fold, viral dose, audio-ml</li>
+    </ul>
+
+    <p class="sub" style="margin-top:24px;">Sources: plan.md · ARCHITECTURE.md · LINUX_SYSTEM_MAP.md · CONTINUITY.md · GRAVITYDESKTOP_JAVA.md · original AVD/POS session 2026-07-05 in plan.original.md</p>
+  </div>
+
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#161a2a',
+        primaryTextColor: '#e6f6ff',
+        primaryBorderColor: '#9be7ff',
+        lineColor: '#5ae0d0',
+        secondaryColor: '#0b1020',
+        tertiaryColor: '#161a2a'
+      }
+    });
+  </script>
+</body>
+</html>

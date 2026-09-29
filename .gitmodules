@@ -1,0 +1,3 @@
+[submodule "nls-video-monitor"]
+	path = nls-video-monitor
+	url = https://github.com/nonlineari/nls-video-monitor.git

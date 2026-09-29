@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Audiovisual signal</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1040px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; background: #121828; border-radius: 8px; padding: 14px 16px; }
+  .pic { border: 1px solid #9be7ff; } .snd { border: 1px solid #e85a6a; }
+  h2 { margin: 0 0 8px; font-size: 16px; }
+  .pic h2 { color: #9be7ff; } .snd h2 { color: #e85a6a; }
+  .step { border-top: 1px solid #243044; padding: 8px 0; font-size: 12.5px; line-height: 1.45; }
+  .k { display: block; font-size: 10px; letter-spacing: 0.12em; color: #5ae0d0; margin-bottom: 3px; }
+  .meet { margin-top: 14px; background: #121828; border: 2px solid #e8c45a; border-radius: 10px; padding: 14px 16px; }
+  .meet h2 { margin: 0 0 8px; color: #e8c45a; font-size: 15px; letter-spacing: 0.08em; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: #8ea0b5; font-weight: 500; padding: 0 8px 6px 0; }
+  td { padding: 6px 8px 6px 0; border-top: 1px solid #243044; vertical-align: top; }
+  td:first-child { color: #e8c45a; width: 22%; }
+  code { color: #9be7ff; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>AUDIOVISUAL SIGNAL</h1>
+  <p class="sub">Picture and sound are processed as one media file. ffprobe reads both streams. The four numbers that leave this stage are the audio_vector the tesseract cell carries.</p>
+  <div class="cols">
+    <div class="col pic">
+      <h2>picture</h2>
+      <div class="step"><span class="k">ACQUIRE</span>Bar URL, drag, or paste. yt-dlp writes ~/Downloads. H.264 is the house picture codec.</div>
+      <div class="step"><span class="k">PIXELS</span>VP9 and AV1 become H.264 at the same width and height. The convert does not scale the frame down.</div>
+      <div class="step"><span class="k">GIF</span>A GIF address, Giphy, Tenor, or an X tweet_video takes the GIF path. That file can still be minted.</div>
+      <div class="step"><span class="k">THETA</span>A non-zero theta rotates into direct-h264-rot&lt;n&gt;-&lt;id&gt;.mp4. The rotated file is the one minted when it exists.</div>
+      <div class="step"><span class="k">DUAL</span>dual vi writes a VP56/webm sibling. The MP4 remains the preview path unless theta replaced it.</div>
+    </div>
+    <div class="col snd">
+      <h2>sound</h2>
+      <div class="step"><span class="k">RECORD</span>WYHIWYREC, net stream, or catalog. Re-encode is soxr 48 kHz, precision 28. Codecs: pcm_s24le, pcm_s16le, FLAC, AAC 256k, MP3 320k.</div>
+      <div class="step"><span class="k">NORM</span>After STOP, peak sets the sample peak to −1 dBFS. Loudness sets integrated loudness to −23 LUFS with true peak −1.5 dBTP. One gain for the programme.</div>
+      <div class="step"><span class="k">GRAVITY SPLIT</span>Identity pan, then channelsplit, at most 8 channels, pcm_s24le at 48 kHz. mix.wav is the amerge. Layouts run stereo through 7.1.</div>
+      <div class="step"><span class="k">METER</span>The signal meter is a second ffmpeg on the monitor. Its samples are not in the file and not in the audio_vector.</div>
+      <div class="step"><span class="k">MINT TARGET</span>Channel WAVs are transport packets. The probed file is the download or the take that mint was given.</div>
+    </div>
+  </div>
+  <div class="meet">
+    <h2>PROBE → 4 NUMBERS ON THE CELL</h2>
+    <table>
+      <tr><th>slot</th><th>source</th><th>formula, each capped at 2.0000</th></tr>
+      <tr><td>v0</td><td>duration</td><td><code>min(duration_sec / 600, 2)</code> · empty duration uses 0.001 s</td></tr>
+      <tr><td>v1</td><td>file size</td><td><code>min(size_MB / 500, 2)</code></td></tr>
+      <tr><td>v2</td><td>bitrate</td><td><code>min(Mbit/s / 10, 2)</code></td></tr>
+      <tr><td>v3</td><td>frame</td><td><code>min(width / height, 2)</code> · missing frame uses 1×1</td></tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>

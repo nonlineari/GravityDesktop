@@ -1,0 +1,35 @@
+{
+  "schema": "gravity.apriori-loop.v1",
+  "mind": "finite/infinite",
+  "temporal": "t_loop",
+  "tetragrammaton": [
+    "Y",
+    "H",
+    "W",
+    "H"
+  ],
+  "tesseract_dims": [
+    "x",
+    "y",
+    "z",
+    "t"
+  ],
+  "idc": [
+    "⿲",
+    "⿳",
+    "⿴",
+    "⿵",
+    "⿶",
+    "⿷",
+    "⿸",
+    "⿹",
+    "⿺",
+    "⿻",
+    "⿰"
+  ],
+  "a_priori": {
+    "escher": "Ascending and Descending — 16-step Gray walk wraps",
+    "duchamp": "Nude Descending a Staircase — one bit-flip per frame",
+    "man_ray": "rayograph — each vertex is a finite photographic take"
+  }
+}

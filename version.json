@@ -1,0 +1,56 @@
+{
+  "name": "nls-video-monitor",
+  "version": "1.1.12",
+  "tag": "v1.1.12",
+  "released": "2026-08-10",
+  "description": "NLS Visualist stack — GravityDesktop, pipeline worker, gravity-serve browser dashboard",
+  "components": {
+    "gravity_desktop": {
+      "version": "1.1.12",
+      "main": "GravityDesktop.java"
+    },
+    "nls_video_pipe": {
+      "version": "1.1.12",
+      "main": "nls_video_pipe.py"
+    },
+    "gravity_serve": {
+      "version": "1.1.12",
+      "main": "gravity_serve.html"
+    },
+    "interlaterus_desktop": {
+      "version": "1.1.12",
+      "main": "interlaterus_desktop.py"
+    }
+  },
+  "ports": {
+    "gravity_server": 4242,
+    "gravity_serve": 8766,
+    "nls_serve": 8765
+  },
+  "changelog": {
+    "1.1.12": [
+      "Convert writes .partial.mp4 then atomic rename; verify playable before completed",
+      "Clear job.error on success; remove partials on requeue/retry",
+      "Explicit -map 0:v:0 -map 0:a:0? for audio-first sources"
+    ],
+    "1.1.11": [
+      "Pipeline run_download uses bundled yt-dlp CLI + H.264 format (fixes 'format not available')",
+      "Local file paths as job URL → convert-only (source_file)",
+      "api_add_job title extract uses cookies/js; /api/retry requeues failed jobs",
+      "Jobs tab: retry button, hide cancelled/completed filters, better Untitled titles"
+    ],
+    "1.1.10": [
+      "Gravity Jobs / pipeline worker: recover stale downloading jobs to pending",
+      "Embedded worker in gravity-serve (GRAVITY_WORKER_ENABLED=1 default)",
+      "/api/worker, /api/worker/start, /api/worker/recover + worker pill on Jobs tab",
+      "Jobs stats: pending/active/failed; show job.error; pipeline add returns worker status"
+    ],
+    "1.1.9": [
+      "Fix /api/cancel — JSON route; restart gravity-serve after upgrades",
+      "DB-first job snapshot — cancelled jobs remain visible",
+      "Proof of Spatio (POS): position_index.json + proof digest API",
+      "Direct download 403 retry, cookies setup, gravity-serve status bar",
+      "parseApiJson / non-JSON 404 handling in HTML + Java clients"
+    ]
+  }
+}

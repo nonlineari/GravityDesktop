@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gravity chain</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1080px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; line-height: 1.45; }
+  .label { font-size: 11px; letter-spacing: 0.14em; color: #5ae0d0; margin: 0 0 6px; }
+  .row { display: flex; gap: 12px; }
+  .card { flex: 1; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 14px; }
+  .card h2 { margin: 0 0 6px; font-size: 14px; color: #9be7ff; }
+  .card p { margin: 0; font-size: 12px; line-height: 1.45; }
+  .arrow { text-align: center; color: #5ae0d0; letter-spacing: 0.4em; margin: 4px 0 8px; }
+  .core { background: #121828; border: 2px solid #e8c45a; border-radius: 10px; padding: 14px 16px 16px; }
+  .core h2 { margin: 0 0 6px; font-size: 16px; color: #e8c45a; letter-spacing: 0.08em; }
+  .core p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.45; }
+  .cells { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .cell { background: #0b1020; border: 1px solid #3a4858; border-radius: 4px; text-align: center; font-size: 12px; padding: 6px 0; color: #d7e0ea; }
+  .cell.on { border-color: #e8c45a; color: #e8c45a; }
+  .note { margin-top: 8px; font-size: 12px; color: #c5d0dc; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>GRAVITY CHAIN</h1>
+  <p class="sub">Audiovisual signal is processed into a file. The file is probed. The tesseract is the address that file receives. Sixteen vertices. The 4D audio vector is the metadata stored on the chosen vertex.</p>
+
+  <p class="label">1  SIGNAL</p>
+  <div class="row">
+    <div class="card"><h2>picture</h2><p>yt-dlp into ~/Downloads. H.264 at the source pixel size. GIF, theta rotate, and VP56 are sibling products of the same download.</p></div>
+    <div class="card"><h2>sound</h2><p>soxr 48 kHz on a re-encode. Optional peak or loudness gain. Gravity splits the programme into discrete WAVs plus mix.wav.</p></div>
+    <div class="card"><h2>file</h2><p>The mint target is the finished media file, not each channel WAV. A direct download calls interlatus mint when the file is closed.</p></div>
+  </div>
+  <div class="arrow">▼</div>
+
+  <p class="label">2  PROBE</p>
+  <div class="row">
+    <div class="card"><h2>ffprobe</h2><p>Duration, size, bitrate, width, height, video codec, audio codec. First video stream and first audio stream.</p></div>
+    <div class="card"><h2>sha256</h2><p>Hash of the file bytes. The same digest picks the pattern code and the vertex. A repeated hash returns the existing cell.</p></div>
+    <div class="card"><h2>audio_vector</h2><p>Four floats, capped at 2: duration/600, size MB/500, Mbit/s/10, width/height. This is probe metadata, not a waveform.</p></div>
+  </div>
+  <div class="arrow">▼</div>
+
+  <p class="label">3  TESSERACT · CORE ADDRESS</p>
+  <div class="core">
+    <h2>VERTEX [x, y, z, t] · EACH AXIS IS 0 OR 1</h2>
+    <p>Four low bits of the content hash, one per axis. Y H W H names the axes x y z t. A Gray-code walk flips one bit per step and closes after 16.</p>
+    <div class="cells">
+      <div class="cell on">0000</div><div class="cell">1000</div><div class="cell">0100</div><div class="cell">1100</div>
+      <div class="cell">0010</div><div class="cell">1010</div><div class="cell">0110</div><div class="cell">1110</div>
+      <div class="cell">0001</div><div class="cell">1001</div><div class="cell">0101</div><div class="cell">1101</div>
+      <div class="cell">0011</div><div class="cell">1011</div><div class="cell">0111</div><div class="cell">1111</div>
+    </div>
+    <p class="note">Top row t=0. Bottom row t=1. Order inside each row is x,y then z. The highlighted cell is the origin. Several files may share one vertex.</p>
+  </div>
+  <div class="arrow">▼</div>
+
+  <p class="label">4  CATALOG</p>
+  <div class="row">
+    <div class="card"><h2>registry</h2><p>SQLite blockcode_registry.db stores pattern, vertex, owner, sha256, and the metadata JSON that holds audio_vector.</p></div>
+    <div class="card"><h2>sidecar</h2><p>&lt;file&gt;.interlaterus.json sits beside the media. nls_media_catalog.json lists pattern, vertex, and audio_vector.</p></div>
+    <div class="card"><h2>POS</h2><p>pos_reconcile pairs the file (AVD) with its vertex (POS). Proof of spatio hashes that index. Capacity is 16 cells.</p></div>
+  </div>
+</div>
+</body>
+</html>

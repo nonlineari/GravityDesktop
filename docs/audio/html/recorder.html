@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Recorder</title>
+<style>
+  html, body { margin: 0; background: #0b1020; color: #d7e0ea; }
+  body { font-family: "DejaVu Sans Mono", ui-monospace, monospace; }
+  .page { width: 1440px; height: 1120px; box-sizing: border-box; padding: 32px 36px 28px; }
+  h1 { margin: 0; font-size: 22px; letter-spacing: 0.12em; color: #9be7ff; }
+  .sub { margin: 8px 0 16px; color: #8ea0b5; font-size: 13px; }
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; background: #121828; border-radius: 8px; padding: 14px 14px 16px; }
+  .wy { border: 1px solid #e85a6a; } .net { border: 1px solid #5ae0d0; } .cat { border: 1px solid #9be7ff; }
+  h2 { margin: 0 0 4px; font-size: 16px; }
+  .wy h2 { color: #e85a6a; } .net h2 { color: #5ae0d0; } .cat h2 { color: #9be7ff; }
+  .role { margin: 0 0 12px; font-size: 12px; color: #8ea0b5; }
+  .step { border-top: 1px solid #243044; padding: 8px 0; }
+  .k { display: block; font-size: 10px; letter-spacing: 0.12em; color: #5ae0d0; margin-bottom: 3px; }
+  .v { font-size: 12px; line-height: 1.4; color: #d7e0ea; }
+  .bar { margin-top: 14px; background: #121828; border: 1px solid #3a4858; border-radius: 8px; padding: 12px 16px; }
+  .bar h2 { color: #9be7ff; font-size: 14px; margin-bottom: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: #8ea0b5; font-weight: 500; padding: 4px 8px 6px 0; }
+  td { padding: 5px 8px 5px 0; border-top: 1px solid #243044; vertical-align: top; }
+  td:first-child { color: #9be7ff; width: 28%; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>RECORDER</h1>
+  <p class="sub">Mode-armed. The filled function is armed. REC, or a second click on that function, starts. STOP closes the take. SAVE copies it.</p>
+  <div class="cols">
+    <div class="col wy">
+      <h2>WYHIWYREC</h2>
+      <p class="role">default armed function</p>
+      <div class="step"><span class="k">SOURCE</span><span class="v">pulse monitor of out:<br>Speaker, TASCAM, HDMI, gravity-out, or gravity-pw</span></div>
+      <div class="step"><span class="k">CAPTURE</span><span class="v">ffmpeg −f pulse −sample_rate 48000 −channels 2 −i &lt;sink&gt;.monitor</span></div>
+      <div class="step"><span class="k">HEAR</span><span class="v">If the sink has no playback and the bar is a live stream, ffplay opens it on PULSE_SINK. The monitor is still the record source.</span></div>
+      <div class="step"><span class="k">SIG</span><span class="v">A second ffmpeg dumps s16le from the same monitor. The meter draws L/R peak and RMS. It does not enter the file.</span></div>
+      <div class="step"><span class="k">OPT</span><span class="v">format · NTS 1/2 · hear · auto · sig</span></div>
+      <div class="step"><span class="k">FILE</span><span class="v">asc-rec-wyhiwyrec-&lt;stem&gt;-&lt;stamp&gt;</span></div>
+    </div>
+    <div class="col net">
+      <h2>net stream</h2>
+      <p class="role">dump of the bar</p>
+      <div class="step"><span class="k">SOURCE</span><span class="v">URL in the bar. NTS /radio becomes stream-relay-geo.ntslive.net/stream or /stream2.</span></div>
+      <div class="step"><span class="k">DIRECT</span><span class="v">Icecast, HLS, mp3, aac, ogg, opus. ffmpeg HTTP input with reconnect and icy.</span></div>
+      <div class="step"><span class="k">INDIRECT</span><span class="v">yt-dlp −f ba/bestaudio/best writes stdout. ffmpeg reads pipe:0.</span></div>
+      <div class="step"><span class="k">COPY</span><span class="v">copy checked and format MP3 on a direct stream: −c:a copy. No soxr.</span></div>
+      <div class="step"><span class="k">OPT</span><span class="v">format · NTS 1/2 · copy</span></div>
+      <div class="step"><span class="k">FILE</span><span class="v">asc-rec-&lt;host-or-nts&gt;-&lt;stamp&gt;</span></div>
+    </div>
+    <div class="col cat">
+      <h2>catalog</h2>
+      <p class="role">selected ASC row</p>
+      <div class="step"><span class="k">SOURCE</span><span class="v">playTarget() of the selected catalog row. Clicking the row arms catalog.</span></div>
+      <div class="step"><span class="k">CAPTURE</span><span class="v">ffmpeg −i &lt;file&gt;. One take. A second function click cannot replace a running take.</span></div>
+      <div class="step"><span class="k">COPY</span><span class="v">copy checked and format AAC: −c:a copy and +faststart.</span></div>
+      <div class="step"><span class="k">OPT</span><span class="v">format · copy</span></div>
+      <div class="step"><span class="k">FILE</span><span class="v">asc-rec-&lt;row stem&gt;-&lt;stamp&gt;</span></div>
+      <div class="step"><span class="k">PLAY</span><span class="v">ASC Play is ffplay of the row. It is separate from REC.</span></div>
+    </div>
+  </div>
+  <div class="bar">
+    <h2>SHARED ENCODE AND CLOSE</h2>
+    <table>
+      <tr><th>control</th><th>effect</th></tr>
+      <tr><td>format</td><td>WAV 48k/24, WAV 48k/16, FLAC 48k, AAC 256k, MP3 320k. Extension .wav .flac .m4a .mp3.</td></tr>
+      <tr><td>soxr</td><td>aresample=48000:resampler=soxr:precision=28 on every re-encode. −vn drops video.</td></tr>
+      <tr><td>STOP</td><td>finishNetRecord destroys ffmpeg, yt-dlp, and hear. Then norm runs if the box is peak or loudness.</td></tr>
+      <tr><td>sidecar</td><td>&lt;file&gt;.rec.json holds fn, title, source_url, format, norm, path, bytes.</td></tr>
+      <tr><td>out:</td><td>Shown for WYHIWYREC. route sets the system default sink. alsa powers card profiles. pw starts pw-loopback gravity-pw.</td></tr>
+    </table>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+# GravityDesktop/.venv — ONLY yt-dlp-run (curl_cffi TLS/JA3 + cookie decrypt).
+# Serve / mint / nls-video use /usr/bin/python3 — never this venv.
+curl_cffi>=0.10
+yt-dlp>=2024.4.9
+secretstorage>=3.3
+
